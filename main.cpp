@@ -14,7 +14,7 @@ public:
 
     bool containsOrigin()
     {
-        return false;
+        return false; // TODO !
     }
 };
 
