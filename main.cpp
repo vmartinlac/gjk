@@ -90,9 +90,15 @@ namespace gjk {
     void distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vector<Dim>& proximal );
 }
 
-template<>
-void gjk::distanceSubalgorithm<2>( SimplexPoints<2>& points, int& num_points, Vector<2>& proximal )
+template<int Dim>
+void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vector<Dim>& proximal )
 {
+   /*
+   std::cout << "Call to distance subalgorithm" << std::endl;
+   std::cout << "numpts = " << num_points << std::endl;
+   std::cout << points << std::endl;
+   */
+
     if(num_points == 0)
     {
         throw std::runtime_error("Internal error");
@@ -103,17 +109,58 @@ void gjk::distanceSubalgorithm<2>( SimplexPoints<2>& points, int& num_points, Ve
     }
     else
     {
-        int sorted[3] = { 0, 1, 2 };
+        int sorted[Dim+1];
+        for(int i=0; i<=Dim; i++)
+        {
+            sorted[i] = i;
+        }
 
-        std::sort( sorted, sorted+num_points, [] (int i, int j)
+        std::sort( sorted, sorted+num_points, [&points] (int i, int j)
         {
             return points.col(i).squaredNorm() < points.col(j).squaredNorm();
         });
 
-        bool go_on = true;
-        for(int i=num_points; go_on && i>=2; i--)
+        SimplexPoints<Dim> newpts;
+        for(int i=0; i<num_points; i++)
         {
-            // TODO
+            newpts.col(i) = points.col(sorted[i]);
+        }
+
+        bool go_on = true;
+
+        for(int n=num_points; go_on && n>=2; n--)
+        {
+        //std::cout << n << std::endl;
+            Eigen::MatrixXd A(n, n);
+            Eigen::VectorXd Y(n);
+
+            A.row(0).fill(1.0);
+            Y(0) = 1.0;
+
+            for(int i=1; i<n; i++)
+            {
+               for(int j=0; j<n; j++)
+               {
+                  A(i, j) = ( points.col(sorted[i]) - points.col(sorted[0]) ).dot( points.col(sorted[j]) );
+               }
+               Y(i) = 0.0;
+            }
+
+            Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
+            solver.compute(A);
+
+            if(solver.isInvertible())
+            {
+               Eigen::VectorXd X = solver.solve(Y);
+
+               if( ( X.array() >= 0.0 ).all() )
+               {
+                  go_on = false;
+                  num_points = n;
+                  proximal = newpts.leftCols(n) * X;
+                  points.swap(newpts);
+               }
+            }
         }
 
         if(go_on)
@@ -123,6 +170,11 @@ void gjk::distanceSubalgorithm<2>( SimplexPoints<2>& points, int& num_points, Ve
             proximal = points.col( sorted[0] );
         }
     }
+    /*
+    std::cout << "num_points_post = " << num_points << std::endl;
+    std::cout << "proximal = " << proximal.transpose() << std::endl;
+    std::cout << std::endl;
+    */
 }
 
 template<int Dim>
@@ -140,15 +192,16 @@ bool gjk::ConvexBody<Dim>::containsOrigin()
 
     bool go_on = true;
     int max_iter = 10000;
-    bool ret = true;
-    const double epsilon = 1.0e-5;
+    bool ret = false;
+    const double epsilon1 = 1.0e-6;
+    const double epsilon2 = 1.0e-4;
 
     while( go_on && max_iter > 0 )
     {
         points.col(num_points) = support(-v);
         num_points++;
 
-        if( (-v).dot( points.col(num_points) - v ) <= epsilon )
+        if( (-v).dot( points.col(num_points-1) - v ) <= epsilon1 )
         {
             go_on = false;
             ret = false;
@@ -157,7 +210,7 @@ bool gjk::ConvexBody<Dim>::containsOrigin()
         {
             distanceSubalgorithm(points, num_points, v);
 
-            if(num_points == Dim+1)
+            if( num_points == Dim+1 || v.norm() < epsilon2 )
             {
                 go_on = false;
                 ret = true;
@@ -172,7 +225,7 @@ bool gjk::ConvexBody<Dim>::containsOrigin()
 
 int main(int num_args, char** args)
 {
-    gjk::Sphere<2> a( gjk::Vector<2>{2.0, 0.0}, 1.0 );
+    gjk::Sphere<2> a( gjk::Vector<2>{2.0, 0.0}, 0.5 );
 
     gjk::Sphere<2> b( gjk::Vector<2>{0.0, 0.0}, 1.0 );
 
