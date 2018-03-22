@@ -110,9 +110,17 @@ void gjk::distanceSubalgorithm<2>( SimplexPoints<2>& points, int& num_points, Ve
             return points.col(i).squaredNorm() < points.col(j).squaredNorm();
         });
 
-        for(int i=num_points; i>0; i--)
+        bool go_on = true;
+        for(int i=num_points; go_on && i>=2; i--)
         {
             // TODO
+        }
+
+        if(go_on)
+        {
+            points.col(0) = points.col( sorted[0] );
+            num_points = 1;
+            proximal = points.col( sorted[0] );
         }
     }
 }
