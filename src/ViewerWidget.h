@@ -2,7 +2,6 @@
 
 #include <QOpenGLWidget>
 
-#include <osg/PositionAttitudeTransform>
 #include <osg/Camera>
 #include <osgViewer/CompositeViewer>
 #include <osgViewer/View>
@@ -35,7 +34,6 @@ public slots:
 
 protected:
 
-    osg::ref_ptr<osg::PositionAttitudeTransform> _position;
     osg::ref_ptr<osgViewer::CompositeViewer> _viewer;
     osg::ref_ptr<osgViewer::View> _view;
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> _window;

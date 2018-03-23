@@ -19,6 +19,7 @@ namespace gjk {
         virtual bool containsOrigin();
     };
 
+    /*
     template<int Dim>
     class Sphere : public ConvexBody<Dim>
     {
@@ -86,6 +87,7 @@ namespace gjk {
         Vector<Dim> _lowerCorner;
         Vector<Dim> _upperCorner;
     };
+    */
 
     template<int Dim>
     class MinkowskiDifference : public ConvexBody<Dim>

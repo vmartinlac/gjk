@@ -1,5 +1,4 @@
 #include <iostream>
-#include "ViewerWidget.h"
 
 #include <osg/Geode>
 #include <osg/StateSet>
@@ -11,18 +10,14 @@
 #include <QEvent>
 #include <QMouseEvent>
 
+#include "ViewerWidget.h"
+#include "World.h"
+
 ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
 {
-    osg::Sphere* s = new osg::Sphere;
+    osg::ref_ptr<osg::Node> data = World::instance()->node();
 
-    osg::ShapeDrawable* d = new osg::ShapeDrawable(s);
-
-    osg::Geode* g = new osg::Geode;
-    g->addDrawable(d);
-
-    _position = new osg::PositionAttitudeTransform;
-    _position->addChild(g);
-
+    //_window = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
     _window = new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height());
 
     _camera = new osg::Camera;
@@ -36,15 +31,12 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
     _view = new osgViewer::View();
     _view->setCameraManipulator(manipulator);
     _view->setCamera(_camera);
-    _view->setSceneData(_position);
-    //_view->setLightingMode(osg::View::NO_LIGHT);
+    _view->setSceneData(data);
     _view->home();
 
     _viewer = new osgViewer::CompositeViewer;
     _viewer->addView(_view);
     _viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
-    //_viewer->setRunFrameScheme( osgViewer::ViewerBase::ON_DEMAND );
-    //_viewer->realize();
 
     //setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -68,9 +60,13 @@ void ViewerWidget::initializeGL()
 {
     osg::Node* n = _view->getSceneData();
     osg::StateSet* stateSet = n->getOrCreateStateSet();
+
+    /*
     osg::Material* material = new osg::Material;
     material->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
     stateSet->setAttributeAndModes( material, osg::StateAttribute::ON );
+    */
+
     stateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
 
@@ -123,7 +119,19 @@ void ViewerWidget::wheelEvent(QWheelEvent* event)
 bool ViewerWidget::event(QEvent* event)
 {
     bool handled = QOpenGLWidget::event(event);
-    this->update();
+
+    switch( event->type() )
+    {
+    case QEvent::KeyPress:
+    case QEvent::KeyRelease:
+    case QEvent::MouseButtonDblClick:
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove:
+        this->update();
+        break;
+    };
+
     return handled;
 }
 
@@ -138,5 +146,6 @@ void ViewerWidget::resizeGL(int width, int height)
 void ViewerWidget::init()
 {
     _view->home();
-    std::cout << "frame" << std::endl;
+    update();
 }
+
