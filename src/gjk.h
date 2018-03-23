@@ -1,4 +1,6 @@
-#include <iostream>
+
+#pragma once
+
 #include <eigen3/Eigen/Eigen>
 
 namespace gjk {
@@ -46,6 +48,43 @@ namespace gjk {
 
         Vector<Dim> _center;
         double _radius;
+    };
+
+    template<int Dim>
+    class Box : public ConvexBody<Dim>
+    {
+    public:
+
+        Box( Vector<Dim> lower_corner, Vector<Dim> upper_corner ) :
+            _lowerCorner(lower_corner),
+            _upperCorner(upper_corner)
+        {
+            ;
+        }
+
+        Vector<Dim> support(const Vector<Dim>& direction) override
+        {
+            Vector<Dim> ret;
+
+            for(int i=0; i<Dim; i++)
+            {
+                if(direction(i) > 0.0)
+                {
+                    ret(i) = _upperCorner(i);
+                }
+                else
+                {
+                    ret(i) = _lowerCorner(i);
+                }
+            }
+
+            return ret;
+        }
+
+    protected:
+
+        Vector<Dim> _lowerCorner;
+        Vector<Dim> _upperCorner;
     };
 
     template<int Dim>
@@ -221,16 +260,5 @@ bool gjk::ConvexBody<Dim>::containsOrigin()
     }
 
     return ret;
-}
-
-int main(int num_args, char** args)
-{
-    gjk::Sphere<2> a( gjk::Vector<2>{2.0, 0.0}, 0.5 );
-
-    gjk::Sphere<2> b( gjk::Vector<2>{0.0, 0.0}, 1.0 );
-
-    std::cout << gjk::areIntersecting(&a, &b) << std::endl;
-
-    return 0;
 }
 
