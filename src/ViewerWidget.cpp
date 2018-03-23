@@ -2,6 +2,8 @@
 #include "ViewerWidget.h"
 
 #include <osg/Geode>
+#include <osg/StateSet>
+#include <osg/Material>
 #include <osg/ShapeDrawable>
 #include <osg/PositionAttitudeTransform>
 #include <osgGA/TrackballManipulator>
@@ -24,10 +26,10 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
     _window = new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height());
 
     _camera = new osg::Camera;
-    _camera->setClearColor( osg::Vec4( 0.1f, 0.1f, 0.9f, 1.0f ) );
+    _camera->setClearColor( osg::Vec4( 0.2f, 0.2f, 0.7f, 1.0f ) );
     _camera->setViewport( 0, 0, this->width(), this->height() );
     _camera->setGraphicsContext(_window);
-    //_camera->setProjectionMatrixAsPerspective( 30.f, double(width())/double(height()), 1.f, 1000.f );
+    _camera->setProjectionMatrixAsPerspective( 30.f, double(width())/double(height()), 1.f, 1000.f );
 
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
 
@@ -35,6 +37,8 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
     _view->setCameraManipulator(manipulator);
     _view->setCamera(_camera);
     _view->setSceneData(_position);
+    //_view->setLightingMode(osg::View::NO_LIGHT);
+    _view->home();
 
     _viewer = new osgViewer::CompositeViewer;
     _viewer->addView(_view);
@@ -53,12 +57,21 @@ void ViewerWidget::paintGL()
     //pos *= 1.01;
     _viewer->frame();
     //_position->setPosition(pos);
-    std::cout << "frame" << std::endl;
 }
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* event)
 {
     _window->getEventQueue()->mouseMotion(event->x(), event->y());
+}
+
+void ViewerWidget::initializeGL()
+{
+    osg::Node* n = _view->getSceneData();
+    osg::StateSet* stateSet = n->getOrCreateStateSet();
+    osg::Material* material = new osg::Material;
+    material->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+    stateSet->setAttributeAndModes( material, osg::StateAttribute::ON );
+    stateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
 
 void ViewerWidget::mousePressEvent(QMouseEvent* event)
@@ -120,4 +133,10 @@ void ViewerWidget::resizeGL(int width, int height)
     _window->resized( this->x(), this->y(), width, height );
 
     _camera->setViewport( 0, 0, this->width(), this->height() );
+}
+
+void ViewerWidget::init()
+{
+    _view->home();
+    std::cout << "frame" << std::endl;
 }

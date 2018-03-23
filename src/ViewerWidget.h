@@ -12,6 +12,8 @@ class QMouseEvent;
 
 class ViewerWidget : public QOpenGLWidget
 {
+    Q_OBJECT
+
 public:
 
     ViewerWidget(QWidget* parent=nullptr);
@@ -25,6 +27,11 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     bool event(QEvent* event) override;
+    void initializeGL() override;
+
+public slots:
+
+    void init();
 
 protected:
 
