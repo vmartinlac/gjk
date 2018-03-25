@@ -63,3 +63,17 @@ protected:
 
    osg::Vec3d _size;
 };
+
+class ConeBody : public Body
+{
+public:
+
+    ConeBody(double height, double radius, double density);
+    gjk::Vector<3> support(const gjk::Vector<3>& direction) override;
+
+protected:
+
+    double _radius;
+    double _height;
+};
+

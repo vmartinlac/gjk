@@ -22,7 +22,6 @@ SphereBody::SphereBody(double radius, double density) :
     _representation = new osg::PositionAttitudeTransform;
     _representation->addChild(g);
 
-    // masse volumique bois est environ 700 kg/m^3.
     _mass = density * M_PI * radius * radius * radius * 4.0 / 3.0;
 }
 
@@ -58,6 +57,7 @@ BoxBody::BoxBody(osg::Vec3d size, double density)
 
 gjk::Vector<3> BoxBody::support(const gjk::Vector<3>& direction)
 {
+    // TODO : support rotation.
     gjk::Vector<3> ret;
 
     for(int i=0; i<3; i++)
@@ -75,3 +75,30 @@ gjk::Vector<3> BoxBody::support(const gjk::Vector<3>& direction)
     return ret;
 }
 
+ConeBody::ConeBody(double height, double radius, double density)
+{
+    _radius = radius;
+    _height = height;
+
+    osg::ref_ptr<osg::Cone> s = new osg::Cone(
+      osg::Vec3d(0.0, 0.0, 0.0),
+      radius,
+      height);
+
+    osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(s);
+
+    osg::ref_ptr<osg::Geode> g = new osg::Geode();
+    g->addDrawable(sd);
+
+    _representation = new osg::PositionAttitudeTransform;
+    _representation->addChild(g);
+
+    _mass = density * height * M_PI * radius * radius / 3.0;
+}
+
+gjk::Vector<3> ConeBody::support(const gjk::Vector<3>& direction)
+{
+    gjk::Vector<3> ret;
+
+    return ret;
+}
