@@ -2,9 +2,7 @@
 
 #include <QOpenGLWidget>
 
-#include <osg/Camera>
-#include <osgViewer/CompositeViewer>
-#include <osgViewer/View>
+#include <osgViewer/Viewer>
 #include <osgViewer/GraphicsWindow>
 
 class QMouseEvent;
@@ -26,16 +24,18 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     bool event(QEvent* event) override;
+    void timerEvent(QTimerEvent* event) override;
     void initializeGL() override;
 
 public slots:
 
     void init();
+    void frameReady();
 
 protected:
 
-    osg::ref_ptr<osgViewer::CompositeViewer> _viewer;
-    osg::ref_ptr<osgViewer::View> _view;
+    osg::ref_ptr<osgViewer::Viewer> _viewer;
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> _window;
-    osg::ref_ptr<osg::Camera> _camera;
+    int _updateTimer;
 };
+

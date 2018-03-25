@@ -14,6 +14,7 @@ public:
 
 protected slots:
 
+    void runSimulation(bool);
     void about();
 
 protected:

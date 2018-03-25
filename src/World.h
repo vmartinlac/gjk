@@ -12,10 +12,7 @@ public:
     World();
     ~World();
     
-    void addBody( osg::ref_ptr<Body> body );
-
-    void startSimulation();
-    void stopSimulation();
+    void addBody( BodyPtr body );
 
     static World* instance()
     {
@@ -24,20 +21,25 @@ public:
 
     osg::Node* node() { return _node; }
 
+public slots:
+
+    void startSimulation();
+    void stopSimulation();
+    void syncRepresentation();
+
+signals:
+
+   void frameReady();
+
 protected:
 
     void step(double dt);
+    void run() override;
 
 protected:
 
-    struct RegisteredBody
-    {
-        osg::ref_ptr<Body> body;
-        osg::Vec3d position;
-        osg::Quat attitude;
-    };
-
     osg::ref_ptr<osg::Group> _node;
-    std::vector<RegisteredBody> _bodies;
+    std::vector< BodyPtr > _bodies;
     static World* _instance;
 };
+

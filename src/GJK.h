@@ -16,109 +16,10 @@ namespace gjk {
     {
     public:
         virtual Vector<Dim> support(const Vector<Dim>& direction) = 0;
-        virtual bool containsOrigin();
-    };
-
-    /*
-    template<int Dim>
-    class Sphere : public ConvexBody<Dim>
-    {
-    public:
-
-        Sphere(
-            const Vector<Dim>& center,
-            double radius) :
-                _center(center),
-                _radius(radius)
-        {
-            ;
-        }
-
-        Vector<Dim> support(const Vector<Dim>& direction) override
-        {
-            Vector<Dim> ret = _center + _radius * direction.normalized();
-            return ret;
-        }
-
-        bool containsOrigin() override
-        {
-            return _center.norm() > _radius;
-        }
-
-    protected:
-
-        Vector<Dim> _center;
-        double _radius;
     };
 
     template<int Dim>
-    class Box : public ConvexBody<Dim>
-    {
-    public:
-
-        Box( Vector<Dim> lower_corner, Vector<Dim> upper_corner ) :
-            _lowerCorner(lower_corner),
-            _upperCorner(upper_corner)
-        {
-            ;
-        }
-
-        Vector<Dim> support(const Vector<Dim>& direction) override
-        {
-            Vector<Dim> ret;
-
-            for(int i=0; i<Dim; i++)
-            {
-                if(direction(i) > 0.0)
-                {
-                    ret(i) = _upperCorner(i);
-                }
-                else
-                {
-                    ret(i) = _lowerCorner(i);
-                }
-            }
-
-            return ret;
-        }
-
-    protected:
-
-        Vector<Dim> _lowerCorner;
-        Vector<Dim> _upperCorner;
-    };
-    */
-
-    template<int Dim>
-    class MinkowskiDifference : public ConvexBody<Dim>
-    {
-    public:
-
-        MinkowskiDifference(
-            ConvexBody<Dim>* o1,
-            ConvexBody<Dim>* o2) :
-            _o1(o1),
-            _o2(o2)
-        {
-            ;
-        }
-
-        Vector<Dim> support(const Vector<Dim>& direction) override
-        {
-            return _o1->support(direction) - _o2->support(-direction);
-        }
-
-    protected:
-
-        ConvexBody<Dim>* _o1;
-        ConvexBody<Dim>* _o2;
-    };
-
-    template<int Dim>
-    inline bool areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
-    {
-        return MinkowskiDifference<Dim>(o1, o2).containsOrigin();
-    }
+    inline bool areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2);
 
     // Find the point of the simplex which is closest to the origin.
     //
@@ -211,16 +112,16 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
             proximal = points.col( sorted[0] );
         }
     }
-    /*
-    std::cout << "num_points_post = " << num_points << std::endl;
-    std::cout << "proximal = " << proximal.transpose() << std::endl;
-    std::cout << std::endl;
-    */
 }
 
 template<int Dim>
-bool gjk::ConvexBody<Dim>::containsOrigin()
+bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
 {
+    auto support = [o1, o2] (const Vector<Dim>& dir) -> Vector<Dim>
+    {
+        return o2->support(dir) - o1->support(-dir);
+    };
+
     SimplexPoints<Dim> points;
     int num_points = 0;
 

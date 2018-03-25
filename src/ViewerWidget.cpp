@@ -8,6 +8,7 @@
 #include <osgGA/TrackballManipulator>
 
 #include <QEvent>
+#include <QTimerEvent>
 #include <QMouseEvent>
 
 #include "ViewerWidget.h"
@@ -17,38 +18,38 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
 {
     osg::ref_ptr<osg::Node> data = World::instance()->node();
 
-    //_window = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
-    _window = new osgViewer::GraphicsWindowEmbedded(x(), y(), width(), height());
-
-    _camera = new osg::Camera;
-    _camera->setClearColor( osg::Vec4( 0.2f, 0.2f, 0.7f, 1.0f ) );
-    _camera->setViewport( 0, 0, this->width(), this->height() );
-    _camera->setGraphicsContext(_window);
-    _camera->setProjectionMatrixAsPerspective( 30.f, double(width())/double(height()), 1.f, 1000.f );
-
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
 
-    _view = new osgViewer::View();
-    _view->setCameraManipulator(manipulator);
-    _view->setCamera(_camera);
-    _view->setSceneData(data);
-    _view->home();
-
-    _viewer = new osgViewer::CompositeViewer;
-    _viewer->addView(_view);
+    _viewer = new osgViewer::Viewer;
+    _viewer->setCameraManipulator(manipulator);
+    _viewer->setSceneData(data);
     _viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
+    _viewer->setRunFrameScheme(osgViewer::Viewer::ON_DEMAND);
+
+    _window = _viewer->setUpViewerAsEmbeddedInWindow(0, 0, width(), height());
 
     //setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setMinimumSize(100, 100);
+    _updateTimer = startTimer(30);
+
+    QObject::connect(
+      World::instance(),
+      SIGNAL(frameReady()),
+      this,
+      SLOT(frameReady()),
+      Qt::BlockingQueuedConnection);
+}
+
+void ViewerWidget::timerEvent(QTimerEvent* ev)
+{
+   if(ev->timerId() == _updateTimer)
+      update();
 }
 
 void ViewerWidget::paintGL()
 {
-    //static osg::Vec3d pos(1.0, 0.0, 0.0);
-    //pos *= 1.01;
     _viewer->frame();
-    //_position->setPosition(pos);
 }
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* event)
@@ -58,16 +59,7 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* event)
 
 void ViewerWidget::initializeGL()
 {
-    osg::Node* n = _view->getSceneData();
-    osg::StateSet* stateSet = n->getOrCreateStateSet();
-
-    /*
-    osg::Material* material = new osg::Material;
-    material->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
-    stateSet->setAttributeAndModes( material, osg::StateAttribute::ON );
-    */
-
-    stateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+   ;
 }
 
 void ViewerWidget::mousePressEvent(QMouseEvent* event)
@@ -92,7 +84,9 @@ void ViewerWidget::mousePressEvent(QMouseEvent* event)
 void ViewerWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     unsigned int button = 0;
-    switch (event->button()){
+
+    switch (event->button())
+    {
     case Qt::LeftButton:
         button = 1;
         break;
@@ -105,14 +99,14 @@ void ViewerWidget::mouseReleaseEvent(QMouseEvent* event)
     default:
         break;
     }
+
     _window->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
 }
 
 void ViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    int delta = event->delta();
-    osgGA::GUIEventAdapter::ScrollingMotion motion = delta > 0 ?
-    osgGA::GUIEventAdapter::SCROLL_UP : osgGA::GUIEventAdapter::SCROLL_DOWN;
+    const int delta = event->delta();
+    osgGA::GUIEventAdapter::ScrollingMotion motion = delta > 0 ?  osgGA::GUIEventAdapter::SCROLL_UP : osgGA::GUIEventAdapter::SCROLL_DOWN;
     _window->getEventQueue()->mouseScroll(motion);
 }
 
@@ -128,8 +122,13 @@ bool ViewerWidget::event(QEvent* event)
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
     case QEvent::MouseMove:
-        this->update();
+        update();
         break;
+    /*
+    case QEvent::Timer:
+        update();
+        break;
+    */
     };
 
     return handled;
@@ -137,15 +136,28 @@ bool ViewerWidget::event(QEvent* event)
 
 void ViewerWidget::resizeGL(int width, int height)
 {
-    _window->getEventQueue()->windowResize( this->x(), this->y(), width, height );
+    //_window->getEventQueue()->windowResize( this->x(), this->y(), width, height );
     _window->resized( this->x(), this->y(), width, height );
 
-    _camera->setViewport( 0, 0, this->width(), this->height() );
+   /*
+   std::vector<osg::Camera*> cameras;
+   _viewer->getCameras( cameras );
+
+   assert( cameras.size() == 1 );
+
+   cameras.front()->setViewport( 0, 0, this->width(), this->height() );
+   */
 }
 
 void ViewerWidget::init()
 {
-    _view->home();
+    _viewer->home();
     update();
+}
+
+void ViewerWidget::frameReady()
+{
+   World::instance()->syncRepresentation();
+   update();
 }
 
