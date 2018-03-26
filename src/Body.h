@@ -10,42 +10,41 @@ class Body : public gjk::ConvexBody<3>
 {
 public:
 
-   Body();
-
-    void syncRepresentation()
-    {
-        _representation->setPosition(
-            osg::Vec3d( position(0), position(1), position(2) )
-        );
-        _representation->setAttitude(
-            osg::Vec4d( attitude.x(), attitude.y(), attitude.z(), attitude.w() )
-        );
-   }
-
-   osg::Node* getRepresentation()
-   {
-      return _representation.get();
-   }
-
-   virtual double getMass()
-   {
-      return _mass;
-   }
+    Body();
+    void syncRepresentation();
 
 public:
 
-    //double mass; // total mass of the body.
-    //Eigen::Vector3d center_of_mass; // center of mass in local frame.
-    //Eigen::Matrix3d inertia_tensor; // inertia tensor in local frame.
-    Eigen::Vector3d position; // position of the origin of local frame in world frame.
-    Eigen::Quaterniond attitude; // attitude of local frame in world frame.
-    Eigen::Vector3d linear_momentum; // linear momentum in local frame.
-    Eigen::Vector3d angular_momentum; // angular momentum in local frame.
+    // if true then the body is not animated and is fixed in the world frame.
+    // if false then the body moves according to the laws of mechanics.
+    bool fixed;
 
-protected:
+    // total mass of the body.
+    double mass;
 
-   osg::ref_ptr<osg::PositionAttitudeTransform> _representation;
-   double _mass;
+    // center of mass of the body in local frame.
+    Eigen::Vector3d center_of_mass;
+
+    // inertia tensor of the body in local frame.
+    Eigen::Matrix3d inertia_tensor;
+
+    // solver to inverse the inertia tensor of the body.
+    Eigen::LDLT< Eigen::Matrix3d > inertia_tensor_solver;
+
+    // openscenegraph node representing the body.
+    osg::ref_ptr<osg::PositionAttitudeTransform> representation;
+
+    // position of the center of mass of the body in world frame.
+    Eigen::Vector3d position;
+
+    // attitude of local frame in world frame.
+    Eigen::Quaterniond attitude;
+
+    // linear momentum in local frame.
+    Eigen::Vector3d linear_momentum;
+
+    // angular momentum in local frame.
+    Eigen::Vector3d angular_momentum;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;
@@ -75,6 +74,7 @@ protected:
    osg::Vec3d _size;
 };
 
+/*
 class ConeBody : public Body
 {
 public:
@@ -87,4 +87,5 @@ protected:
     double _radius;
     double _height;
 };
+*/
 
