@@ -1,3 +1,4 @@
+#include <iostream>
 #include <osg/ShapeDrawable>
 #include <osg/Geode>
 #include "Body.h"
@@ -84,6 +85,7 @@ ConeBody::ConeBody(double height, double radius, double density)
       osg::Vec3d(0.0, 0.0, 0.0),
       radius,
       height);
+    s->setCenter( osg::Vec3d( 0.0, 0.0, height*( s->getBaseOffsetFactor() - 1.0/3.0 )) );
 
     osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(s);
 

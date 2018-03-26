@@ -21,6 +21,11 @@ World::World()
     _instance = this;
 
     _node = new osg::Group;
+
+    _timestep = 1000 / 30;
+
+    _timer = new QTimer(this);
+    connect(_timer, SIGNAL(timeout()), this, SLOT(step()));
 }
 
 World::~World()
@@ -33,55 +38,25 @@ World::~World()
     _instance = nullptr;
 }
 
-void World::step(double dt)
+void World::step()
 {
    for(BodyPtr& b : _bodies)
    {
-      b->position += osg::Vec3d(0.0, 0.0, 0.1);
+      b->position(2) += 0.1;
    }
-}
 
-void World::run()
-{
-   const int step_duration = 1000 / 30;
-
-   while(isInterruptionRequested() == false)
-   {
-      QTime time;
-      time.start();
-
-      step(double(step_duration) * 1.0e-3);
-      frameReady();
-      
-      const int elapsed = time.elapsed();
-      const int remaining = step_duration - elapsed;
-
-      if(remaining > 0)
-      {
-         //std::cout << double(time.elapsed()) / double(step_duration) << std::endl;
-         msleep(remaining);
-      }
-      else
-      {
-         yieldCurrentThread();
-      }
-   }
+    //QMetaObject::invokeMethod( this, "syncRepresentation", Qt::BlockingQueuedConnection );
+    syncRepresentation();
 }
 
 void World::startSimulation()
 {
-   if(isRunning() == false)
-   {
-      start();
-   }
+    _timer->start(_timestep);
 }
 
 void World::stopSimulation()
 {
-   if(isRunning())
-   {
-      requestInterruption();
-   }
+   _timer->stop();
 }
 
 void World::syncRepresentation()

@@ -32,13 +32,6 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
     setFocusPolicy(Qt::StrongFocus);
     setMinimumSize(100, 100);
     _updateTimer = startTimer(30);
-
-    QObject::connect(
-      World::instance(),
-      SIGNAL(frameReady()),
-      this,
-      SLOT(frameReady()),
-      Qt::BlockingQueuedConnection);
 }
 
 void ViewerWidget::timerEvent(QTimerEvent* ev)

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QThread>
+#include <QTimer>
+//#include <QThread>
 #include <vector>
 #include "Body.h"
 
-class World : public QThread
+class World : public QObject
 {
     Q_OBJECT
 public:
@@ -27,19 +28,16 @@ public slots:
     void stopSimulation();
     void syncRepresentation();
 
-signals:
+protected slots:
 
-   void frameReady();
-
-protected:
-
-    void step(double dt);
-    void run() override;
+    void step();
 
 protected:
 
     osg::ref_ptr<osg::Group> _node;
     std::vector< BodyPtr > _bodies;
+    QTimer* _timer;
+    int _timestep;
     static World* _instance;
 };
 
