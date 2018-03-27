@@ -33,7 +33,7 @@ int main(int num_args, char** args)
     body3->representationState().position << 0.0, 0.0, -6.0;
     body3->representationState().attitude.setFromTwoVectors(
         Eigen::Vector3d(0.0, 0.0, 1.0),
-        Eigen::Vector3d(0.0, -1.0, 1.0)
+        Eigen::Vector3d(0.7, -0.7, 0.4)
         //Eigen::Vector3d(-1.0, 0.0, 1.0)
     );
     //body3->representationState().attitude.setIdentity();
