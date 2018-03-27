@@ -133,7 +133,7 @@ bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
     }
 
     bool go_on = true;
-    int max_iter = 10000;
+    int max_iter = 100;
     bool ret = false;
     const double epsilon1 = 1.0e-6;
     const double epsilon2 = 1.0e-4;
