@@ -21,6 +21,14 @@ Body::Body()
     collisionDetectionState() = representationState();
 }
 
+BoxBody* Body::asBox() { return nullptr; }
+
+SphereBody* Body::asSphere() { return nullptr; }
+
+BoxBody* BoxBody::asBox() { return this; }
+
+SphereBody* SphereBody::asSphere() { return this; }
+
 void Body::syncRepresentation()
 {
    // OO' = OG - O'G

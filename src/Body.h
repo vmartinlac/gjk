@@ -6,6 +6,9 @@
 #include <Eigen/Eigen>
 #include "GJK.h"
 
+class BoxBody;
+class SphereBody;
+
 class Body : public gjk::ConvexBody<3>
 {
 public:
@@ -30,6 +33,10 @@ public:
     Body();
 
     void syncRepresentation();
+
+    virtual BoxBody* asBox();
+
+    virtual SphereBody* asSphere();
 
     State& collisionDetectionState();
 
@@ -101,6 +108,7 @@ class SphereBody : public Body
 public:
 
     SphereBody(double radius, double density);
+    SphereBody* asSphere() override;
     gjk::Vector<3> support(const gjk::Vector<3>& direction) override;
 
 protected:
@@ -114,6 +122,7 @@ class BoxBody : public Body
 public:
 
     BoxBody(osg::Vec3d size, double density);
+    BoxBody* asBox() override;
     gjk::Vector<3> support(const gjk::Vector<3>& direction) override;
 
 protected:
