@@ -2,11 +2,14 @@
 #include <iostream>
 #include <memory>
 #include "World.h"
+#include "Collision.h"
 
+/*
 #include <osg/Geometry>
 #include <osg/Point>
 #include <osg/Geode>
 #include <osg/PrimitiveSet>
+*/
 
 World* World::_instance = nullptr;
 
@@ -62,7 +65,7 @@ World::World()
 
     _node = new osg::Group;
 
-    _timestep = 1000 / 30;
+    _timestep = 1000 / 60;
 
     _timer = new QTimer(this);
     connect(_timer, SIGNAL(timeout()), this, SLOT(step()));
@@ -126,21 +129,36 @@ void World::step()
 
     for(int i=0; i<_bodies.size(); i++)
     {
-        bool collision = false;
-
-        for(int j=i+1; collision == false && j<_bodies.size(); j++)
+        BodyPtr b1 = _bodies[i];
+        if( b1->isFixed() == false )
         {
-            collision = gjk::areIntersecting(_bodies[i].get(), _bodies[j].get());
-            if(collision)
+            bool collision = false;
+
+            for(int j=0; collision == false && j<_bodies.size(); j++)
             {
-                _bodies[i]->setFixed(true);
-                _bodies[j]->setFixed(true);
-            }
-        }
+                if(j != i)
+                {
+                    BodyPtr b2 = _bodies[j];
 
-        if(collision == false)
-        {
-            _bodies[i]->switchStates();
+                    Eigen::Vector3d collision_point;
+
+                    collision = Collision::detect(
+                        b1.get(),
+                        b2.get(),
+                        collision_point);
+
+                    if(collision)
+                    {
+                        b1->setFixed(true);
+                        b2->setFixed(true);
+                    }
+                }
+            }
+
+            if(collision == false)
+            {
+                b1->switchStates();
+            }
         }
     }
 

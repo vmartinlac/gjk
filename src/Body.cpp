@@ -92,7 +92,7 @@ gjk::Vector<3> SphereBody::support(const gjk::Vector<3>& direction)
     return pos + direction.normalized() * _radius;
 }
 
-BoxBody::BoxBody(osg::Vec3d size, double density)
+BoxBody::BoxBody(const Eigen::Vector3d& size, double density)
 {
    _size = size;
 
@@ -146,5 +146,21 @@ gjk::Vector<3> BoxBody::support(const gjk::Vector<3>& direction)
     return
         collisionDetectionState().position +
         collisionDetectionState().attitude * ret;
+}
+
+Body::BoundingSphere BoxBody::getBoundingSphere()
+{
+    BoundingSphere ret;
+    ret.center = collisionDetectionState().position;
+    ret.radius = 0.5 * _size.norm();
+    return ret;
+}
+
+Body::BoundingSphere SphereBody::getBoundingSphere()
+{
+    BoundingSphere ret;
+    ret.center = collisionDetectionState().position;
+    ret.radius = getRadius();
+    return ret;
 }
 

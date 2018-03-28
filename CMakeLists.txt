@@ -17,6 +17,7 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 add_executable(
     gjk
     src/main.cpp
+    src/Collision.cpp
     src/World.cpp
     src/Body.cpp
     src/ViewerWidget.cpp

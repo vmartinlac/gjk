@@ -28,6 +28,12 @@ public:
         Eigen::Vector3d angular_momentum;
     };
 
+    struct BoundingSphere
+    {
+        Eigen::Vector3d center;
+        double radius;
+    };
+
 public:
 
     Body();
@@ -37,6 +43,12 @@ public:
     virtual BoxBody* asBox();
 
     virtual SphereBody* asSphere();
+
+    bool isBox() { return asBox() != nullptr; }
+
+    bool isSphere() { return asSphere() != nullptr; }
+
+    virtual BoundingSphere getBoundingSphere() = 0;
 
     State& collisionDetectionState();
 
@@ -109,7 +121,9 @@ public:
 
     SphereBody(double radius, double density);
     SphereBody* asSphere() override;
+    BoundingSphere getBoundingSphere() override;
     gjk::Vector<3> support(const gjk::Vector<3>& direction) override;
+    double getRadius() { return _radius; }
 
 protected:
 
@@ -121,12 +135,14 @@ class BoxBody : public Body
 {
 public:
 
-    BoxBody(osg::Vec3d size, double density);
+    BoxBody(const Eigen::Vector3d& size, double density);
     BoxBody* asBox() override;
+    BoundingSphere getBoundingSphere() override;
     gjk::Vector<3> support(const gjk::Vector<3>& direction) override;
+    Eigen::Vector3d getSize() { return _size; }
 
 protected:
 
-   osg::Vec3d _size;
+   Eigen::Vector3d _size;
 };
 

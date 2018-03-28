@@ -93,6 +93,11 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
             }
         }
 
+        if( new_num_points == 0 )
+        {
+            throw std::runtime_error("GJK failed.");
+        }
+
         X /= X.sum();
         
         // TODO : what if new_num_points == 0 ?
@@ -122,7 +127,7 @@ bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
     }
 
     bool go_on = true;
-    int max_iter = 1000;
+    int max_iter = 100;
     bool ret = false;
     const double epsilon1 = 1.0e-6;
     const double epsilon2 = 1.0e-4;
