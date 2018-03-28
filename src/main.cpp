@@ -6,6 +6,22 @@
 
 int main(int num_args, char** args)
 {
+    gjk::SimplexPoints<2> points;
+    points.col(0) << -2.0, 0.0;
+    points.col(1) << -1.0, 0.0;
+
+    int num_points = 2;
+
+    gjk::Vector<2> proximal;
+    gjk::distanceSubalgorithm(points, num_points, proximal);
+
+    std::cout << "Proximal : " << std::endl;
+    std::cout << proximal << std::endl;
+    std::cout << "New simplex : " << std::endl;
+    std::cout << points.leftCols(num_points) << std::endl;
+    //return 0;
+    //
+
     QApplication app(num_args, args);
 
     World* world = new World;
@@ -16,15 +32,16 @@ int main(int num_args, char** args)
     body1->setFixed(false);
     world->addBody(body1);
 
+    /*
     BodyPtr body2( new SphereBody(1.0, CTE_WOOD_DENSITY) );
     body2->representationState().position << 3.0, 0.0, 9.0;
     body2->collisionDetectionState() = body2->representationState();
     body2->setFixed(false);
     world->addBody(body2);
 
-    /*
     BodyPtr body4( new SphereBody(1.0, CTE_WOOD_DENSITY) );
     body4->representationState().position << -3.0, 0.0, 12.0;
+    body4->collisionDetectionState() = body4->representationState();
     body4->setFixed(false);
     world->addBody(body4);
     */
@@ -33,8 +50,8 @@ int main(int num_args, char** args)
     body3->representationState().position << 0.0, 0.0, -6.0;
     body3->representationState().attitude.setFromTwoVectors(
         Eigen::Vector3d(0.0, 0.0, 1.0),
-        Eigen::Vector3d(0.7, -0.7, 0.4)
-        //Eigen::Vector3d(-1.0, 0.0, 1.0)
+        //Eigen::Vector3d(0.4, -0.4, 0.7)
+        Eigen::Vector3d(0.4, 0.0, 0.7)
     );
     //body3->representationState().attitude.setIdentity();
     body3->collisionDetectionState() = body3->representationState();

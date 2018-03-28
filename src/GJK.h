@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <eigen3/Eigen/Eigen>
 
 namespace gjk {
@@ -51,66 +52,54 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
     }
     else
     {
-        int sorted[Dim+1];
-        for(int i=0; i<=Dim; i++)
+        Eigen::MatrixXd A(num_points, num_points);
+        Eigen::VectorXd Y(num_points);
+
+        A.row(0).fill(1.0);
+        Y(0) = 1.0;
+
+        for(int i=1; i<num_points; i++)
         {
-            sorted[i] = i;
+           for(int j=0; j<num_points; j++)
+           {
+              A(i, j) = ( points.col(i) - points.col(0) ).dot( points.col(j) );
+           }
+           Y(i) = 0.0;
         }
 
-        std::sort( sorted, sorted+num_points, [&points] (int i, int j)
-        {
-            return points.col(i).squaredNorm() < points.col(j).squaredNorm();
-        });
+        Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
+        solver.compute(A);
 
-        SimplexPoints<Dim> newpts;
+        if( solver.isInvertible() == false )
+        {
+            std::cout << "Non invertible matrix in GJK" << std::endl;
+        }
+
+        Eigen::VectorXd X = solver.solve(Y);
+
+        int new_num_points = 0;
+        SimplexPoints<Dim> new_points;
+
         for(int i=0; i<num_points; i++)
         {
-            newpts.col(i) = points.col(sorted[i]);
-        }
-
-        bool go_on = true;
-
-        for(int n=num_points; go_on && n>=2; n--)
-        {
-        //std::cout << n << std::endl;
-            Eigen::MatrixXd A(n, n);
-            Eigen::VectorXd Y(n);
-
-            A.row(0).fill(1.0);
-            Y(0) = 1.0;
-
-            for(int i=1; i<n; i++)
+            if( X(i) > 0.0 )
             {
-               for(int j=0; j<n; j++)
-               {
-                  A(i, j) = ( points.col(sorted[i]) - points.col(sorted[0]) ).dot( points.col(sorted[j]) );
-               }
-               Y(i) = 0.0;
+                new_points.col(new_num_points) = points.col(i);
+                new_num_points++;
             }
-
-            Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
-            solver.compute(A);
-
-            if(solver.isInvertible())
+            else
             {
-               Eigen::VectorXd X = solver.solve(Y);
-
-               if( ( X.array() >= 0.0 ).all() )
-               {
-                  go_on = false;
-                  num_points = n;
-                  proximal = newpts.leftCols(n) * X;
-                  points.swap(newpts);
-               }
+                X(i) = 0.0;
             }
         }
 
-        if(go_on)
-        {
-            points.col(0) = points.col( sorted[0] );
-            num_points = 1;
-            proximal = points.col( sorted[0] );
-        }
+        X /= X.sum();
+        
+        // TODO : what if new_num_points == 0 ?
+
+        proximal = points.leftCols(num_points) * X;
+        num_points = new_num_points;
+        points.swap(new_points);
     }
 }
 
@@ -133,7 +122,7 @@ bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
     }
 
     bool go_on = true;
-    int max_iter = 100;
+    int max_iter = 1000;
     bool ret = false;
     const double epsilon1 = 1.0e-6;
     const double epsilon2 = 1.0e-4;
@@ -161,6 +150,8 @@ bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
 
         max_iter--;
     }
+
+    if(max_iter <= 0) std::cout << "GJK : max number of iterations reached !" << std::endl;
 
     return ret;
 }

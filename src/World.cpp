@@ -15,7 +15,8 @@ void World::addBody(BodyPtr body)
     _bodies.push_back( body );
     _node->addChild( body->getRepresentation() );
 
-    //
+    // display the image of the unit sphere by the support function.
+    /*
     osg::ref_ptr<osg::Vec3dArray> points = new osg::Vec3dArray;
     for(double theta = 0.0; theta<2.0*M_PI; theta += 5.0*M_PI/180.0)
     {
@@ -47,7 +48,7 @@ void World::addBody(BodyPtr body)
     geode->addDrawable(geom);
 
     _node->addChild(geode);
-    //
+    */
 }
 
 World::World()
