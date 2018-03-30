@@ -2,6 +2,11 @@
 
 bool Collision::detect(Body* b1, Body* b2, Eigen::Vector3d& collision_point)
 {
+    if( b1 == b2 )
+    {
+        std::cerr << "Warning ! Collision detection algorithm body1 == body2 !" << std::endl;
+    }
+
     if( b1->isBox() && b2->isSphere() )
     {
         BoxBody* box = b1->asBox();

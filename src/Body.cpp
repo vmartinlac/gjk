@@ -3,6 +3,14 @@
 #include <osg/Geode>
 #include "Body.h"
 
+Body::State::State()
+{
+    position.setZero();
+    attitude.setIdentity();
+    linear_momentum.setZero();
+    angular_momentum.setZero();
+}
+
 Body::Body()
 {
     _fixed = true;
@@ -10,16 +18,13 @@ Body::Body()
     _centerOfMass.setZero();
     _inertiaTensor.setIdentity();
     _inertiaTensorSolver.compute(_inertiaTensor);
-
-    _stateNum = 0;
-
-    representationState().position.setZero();
-    representationState().attitude.setIdentity();
-    representationState().linear_momentum.setZero();
-    representationState().angular_momentum.setZero();
-
-    collisionDetectionState() = representationState();
 }
+
+Body::State& Body::initialState() { return _initialState; }
+
+Body::State& Body::collisionDetectionState() { return _collisionDetectionState; }
+
+Body::State& Body::representationState() { return _representationState; }
 
 BoxBody* Body::asBox() { return nullptr; }
 
@@ -43,21 +48,6 @@ void Body::syncRepresentation()
    _representation->setAttitude(
       osg::Vec4d( attitude.x(), attitude.y(), attitude.z(), attitude.w() )
    );
-}
-
-Body::State& Body::collisionDetectionState()
-{
-    return _state[_stateNum];
-}
-
-Body::State& Body::representationState()
-{
-    return _state[_stateNum ^ 1];
-}
-
-void Body::switchStates()
-{
-    _stateNum ^= 1;
 }
 
 SphereBody::SphereBody(double radius, double density) :

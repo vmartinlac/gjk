@@ -15,6 +15,8 @@ public:
 
     struct State
     {
+        State();
+
         // position of the center of mass of the body in world frame.
         Eigen::Vector3d position;
 
@@ -50,11 +52,9 @@ public:
 
     virtual BoundingSphere getBoundingSphere() = 0;
 
+    State& initialState();
     State& collisionDetectionState();
-
     State& representationState();
-
-    void switchStates();
 
     // total mass of the body.
     double getMass()
@@ -109,8 +109,9 @@ protected:
 
 private:
 
-    State _state[2];
-    int _stateNum;
+    State _initialState;
+    State _representationState;
+    State _collisionDetectionState;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

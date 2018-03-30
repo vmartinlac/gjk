@@ -5,17 +5,17 @@
 #include <vector>
 #include "Body.h"
 
-class World : public QObject
+class Solver : public QObject
 {
     Q_OBJECT
 public:
 
-    World();
-    ~World();
+    Solver();
+    ~Solver();
     
     void addBody( BodyPtr body );
 
-    static World* instance()
+    static Solver* instance()
     {
         return _instance;
     }
@@ -24,9 +24,9 @@ public:
 
 public slots:
 
+    void init();
     void startSimulation();
     void stopSimulation();
-    void syncRepresentation();
 
 protected slots:
 
@@ -34,10 +34,14 @@ protected slots:
 
 protected:
 
+    void syncRepresentation();
+
+protected:
+
     osg::ref_ptr<osg::Group> _node;
     std::vector< BodyPtr > _bodies;
     QTimer* _timer;
     int _timestep;
-    static World* _instance;
+    static Solver* _instance;
 };
 

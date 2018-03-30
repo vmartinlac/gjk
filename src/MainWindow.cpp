@@ -1,12 +1,13 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QToolBar>
-#include "World.h"
+#include "Solver.h"
 #include "MainWindow.h"
 #include "ViewerWidget.h"
 
 MainWindow::MainWindow(QWidget* parent)
 {
+
     _viewer = new ViewerWidget(this);
     setCentralWidget(_viewer);
     resize(640, 480);
@@ -35,11 +36,11 @@ void MainWindow::runSimulation(bool run)
 {
    if(run)
    {
-      World::instance()->startSimulation();
+      Solver::instance()->startSimulation();
    }
    else
    {
-      World::instance()->stopSimulation();
+      Solver::instance()->stopSimulation();
    }
 }
 

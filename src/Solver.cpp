@@ -1,7 +1,7 @@
 #include <QTime>
 #include <iostream>
 #include <memory>
-#include "World.h"
+#include "Solver.h"
 #include "Collision.h"
 
 /*
@@ -11,9 +11,9 @@
 #include <osg/PrimitiveSet>
 */
 
-World* World::_instance = nullptr;
+Solver* Solver::_instance = nullptr;
 
-void World::addBody(BodyPtr body)
+void Solver::addBody(BodyPtr body)
 {
     _bodies.push_back( body );
     _node->addChild( body->getRepresentation() );
@@ -54,7 +54,7 @@ void World::addBody(BodyPtr body)
     */
 }
 
-World::World()
+Solver::Solver()
 {
     if(_instance != nullptr)
     {
@@ -71,7 +71,7 @@ World::World()
     connect(_timer, SIGNAL(timeout()), this, SLOT(step()));
 }
 
-World::~World()
+Solver::~Solver()
 {
     if(_instance == nullptr)
     {
@@ -81,7 +81,7 @@ World::~World()
     _instance = nullptr;
 }
 
-void World::step()
+void Solver::step()
 {
     const double dt = double(_timestep) * 1.0e-3;
 
@@ -146,18 +146,16 @@ void World::step()
                         b1.get(),
                         b2.get(),
                         collision_point);
-
-                    if(collision)
-                    {
-                        b1->setFixed(true);
-                        b2->setFixed(true);
-                    }
                 }
             }
 
             if(collision == false)
             {
-                b1->switchStates();
+                b1->representationState() = b1->collisionDetectionState();
+            }
+            else
+            {
+                ;
             }
         }
     }
@@ -166,21 +164,30 @@ void World::step()
     syncRepresentation();
 }
 
-void World::startSimulation()
+void Solver::startSimulation()
 {
     _timer->start(_timestep);
 }
 
-void World::stopSimulation()
+void Solver::stopSimulation()
 {
    _timer->stop();
 }
 
-void World::syncRepresentation()
+void Solver::syncRepresentation()
 {
    for(BodyPtr& b : _bodies)
    {
       b->syncRepresentation();
    }
+}
+
+void Solver::init()
+{
+    for(BodyPtr& b : _bodies)
+    {
+        b->representationState() = b->initialState();
+    }
+    syncRepresentation();
 }
 
