@@ -37,36 +37,38 @@ int main(int num_args, char** args)
     body1->setFixed(false);
     world->addBody(body1);
 
-    BodyPtr body5( new BoxBody( Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_IRON_DENSITY ) );
-    body5->representationState().position << -3.0, 0.0, 10.0;
-    body5->collisionDetectionState() = body5->representationState();
-    body5->setFixed(false);
-    world->addBody(body5);
-
-    /*
     BodyPtr body2( new SphereBody(1.0, CTE_WOOD_DENSITY) );
-    body2->representationState().position << 3.0, 0.0, 9.0;
+    body2->representationState().position << -3.0, 0.0, 10.0;
     body2->collisionDetectionState() = body2->representationState();
     body2->setFixed(false);
     world->addBody(body2);
 
-    BodyPtr body4( new SphereBody(1.0, CTE_WOOD_DENSITY) );
-    body4->representationState().position << -3.0, 0.0, 12.0;
-    body4->collisionDetectionState() = body4->representationState();
-    body4->setFixed(false);
-    world->addBody(body4);
-    */
+    BodyPtr body3( new BoxBody( Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_IRON_DENSITY ) );
+    body3->representationState().position << 3.0, 0.0, 10.0;
+    body3->collisionDetectionState() = body3->representationState();
+    body3->setFixed(false);
+    world->addBody(body3);
 
-    BodyPtr body3( new BoxBody( Eigen::Vector3d{20.0, 20.0, 1.0}, CTE_IRON_DENSITY ) );
-    body3->representationState().position << 0.0, 0.0, -6.0;
-    body3->representationState().attitude.setFromTwoVectors(
+    BodyPtr body5( new BoxBody( Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_IRON_DENSITY ) );
+    body5->representationState().position << 3.0, 0.0, 20.0;
+    body5->representationState().attitude.setFromTwoVectors(
+        Eigen::Vector3d(0.0, 0.0, 1.0),
+        Eigen::Vector3d(1.4, 1.0, 1.0)
+    );
+    body5->collisionDetectionState() = body5->representationState();
+    body5->setFixed(false);
+    world->addBody(body5);
+
+    BodyPtr body4( new BoxBody( Eigen::Vector3d{20.0, 20.0, 1.0}, CTE_IRON_DENSITY ) );
+    body4->representationState().position << 0.0, 0.0, -6.0;
+    body4->representationState().attitude.setFromTwoVectors(
         Eigen::Vector3d(0.0, 0.0, 1.0),
         //Eigen::Vector3d(0.4, -0.4, 0.7)
         Eigen::Vector3d(0.4, 0.0, 0.7)
     );
     //body3->representationState().attitude.setIdentity();
-    body3->collisionDetectionState() = body3->representationState();
-    world->addBody(body3);
+    body4->collisionDetectionState() = body4->representationState();
+    world->addBody(body4);
 
     world->syncRepresentation();
 
