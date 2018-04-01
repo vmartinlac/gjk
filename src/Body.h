@@ -52,9 +52,14 @@ public:
 
     virtual BoundingSphere getBoundingSphere() = 0;
 
-    State& initialState();
-    State& collisionDetectionState();
-    State& representationState();
+    State& initialState() { return _initialState; }
+    State& collisionDetectionState() { return _collisionDetectionState; }
+    State& representationState() { return _representationState; }
+
+    State& stateDerivative() { return _stateDerivative; }
+
+    Eigen::Vector3d& resultantForce() { return _resultantForce; }
+    Eigen::Vector3d& resultantTorque() { return _resultantTorque; }
 
     // total mass of the body.
     double getMass()
@@ -62,16 +67,14 @@ public:
         return _mass;
     }
 
-    // if true then the body is not animated and is fixed in the world frame.
-    // if false then the body moves according to the laws of mechanics.
-    bool isFixed()
+    bool isMoving()
     {
-        return _fixed;
+        return _moving;
     }
 
-    void setFixed(bool value)
+    void setMoving(bool value)
     {
-        _fixed = value;
+        _moving = value;
     }
 
     // center of mass of the body (body frame).
@@ -101,7 +104,7 @@ public:
 protected:
 
     double _mass;
-    bool _fixed;
+    bool _moving;
     Eigen::Vector3d _centerOfMass;
     Eigen::Matrix3d _inertiaTensor;
     Eigen::LDLT< Eigen::Matrix3d > _inertiaTensorSolver;
@@ -112,6 +115,9 @@ private:
     State _initialState;
     State _representationState;
     State _collisionDetectionState;
+    State _stateDerivative;
+    Eigen::Vector3d _resultantForce;
+    Eigen::Vector3d _resultantTorque;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

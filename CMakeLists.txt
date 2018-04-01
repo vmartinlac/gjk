@@ -18,6 +18,7 @@ add_executable(
     gjk
     src/main.cpp
     src/Collision.cpp
+    src/Spring.cpp
     src/Solver.cpp
     src/Body.cpp
     src/ViewerWidget.cpp

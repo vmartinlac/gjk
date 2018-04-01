@@ -13,18 +13,12 @@ Body::State::State()
 
 Body::Body()
 {
-    _fixed = true;
+    _moving = true;
     _mass = 1.0;
     _centerOfMass.setZero();
     _inertiaTensor.setIdentity();
     _inertiaTensorSolver.compute(_inertiaTensor);
 }
-
-Body::State& Body::initialState() { return _initialState; }
-
-Body::State& Body::collisionDetectionState() { return _collisionDetectionState; }
-
-Body::State& Body::representationState() { return _representationState; }
 
 BoxBody* Body::asBox() { return nullptr; }
 

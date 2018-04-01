@@ -4,6 +4,7 @@
 //#include <QThread>
 #include <vector>
 #include "Body.h"
+#include "Spring.h"
 
 class Solver : public QObject
 {
@@ -14,6 +15,8 @@ public:
     ~Solver();
     
     void addBody( BodyPtr body );
+
+    void addSpring( SpringPtr spring );
 
     static Solver* instance()
     {
@@ -40,8 +43,10 @@ protected:
 
     osg::ref_ptr<osg::Group> _node;
     std::vector< BodyPtr > _bodies;
+    std::vector< SpringPtr > _springs;
     QTimer* _timer;
     int _timestep;
+    double _time;
     static Solver* _instance;
 };
 
