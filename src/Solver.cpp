@@ -115,9 +115,11 @@ void Solver::step()
 
     while(go_on)
     {
+        ExplicitEulerMethod method(this);
+
         bool completed;
         double effectivedt;
-        substepWithExplicitEulerMethod(time_left, effectivedt, completed);
+        method.run(time_left, effectivedt, completed);
 
         go_on = !completed;
         time_left -= effectivedt;
@@ -168,17 +170,37 @@ void Solver::step()
     syncRepresentation();
 }
 
-void Solver::substepWithExplicitEulerMethod(double maxdt, double& dt, bool& completed)
+// Crank-Nicholson method for solving the ODE.
+
+Solver::CrankNicholsonMethod::CrankNicholsonMethod(Solver* solver, double theta)
+{
+    _theta = theta;
+    _solver = solver;
+}
+
+void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed)
+{
+    throw;
+}
+
+// Explicit Euler method.
+
+Solver::ExplicitEulerMethod::ExplicitEulerMethod(Solver* solver)
+{
+    _solver = solver;
+}
+
+void Solver::ExplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
 {
     completed = true;
     dt = maxdt;
 
-    Eigen::VectorXd derivatives(13*_numBodies);
+    Eigen::VectorXd derivatives(13*_solver->_numBodies);
     derivatives.setZero();
 
     // initialise derivatives and computes timestep and gather forces and torques.
 
-    for(BodyPtr body : _bodies)
+    for(BodyPtr body : _solver->_bodies)
     {
         Body::State& state = body->currentState();
 
@@ -222,7 +244,7 @@ void Solver::substepWithExplicitEulerMethod(double maxdt, double& dt, bool& comp
         derivatives.segment<3>(13*id+10) = resultant_torque;
     }
 
-    for(SpringPtr spring : _springs)
+    for(SpringPtr spring : _solver->_springs)
     {
         Body* B1 = spring->getBody1();
         Body* B2 = spring->getBody2();
@@ -245,7 +267,7 @@ void Solver::substepWithExplicitEulerMethod(double maxdt, double& dt, bool& comp
 
     // update state.
 
-    for(BodyPtr body : _bodies)
+    for(BodyPtr body : _solver->_bodies)
     {
         if(body->isMoving())
         {
@@ -263,10 +285,5 @@ void Solver::substepWithExplicitEulerMethod(double maxdt, double& dt, bool& comp
             state.angular_momentum += dt * derivatives.segment<3>(13*id+10);
         }
     }
-}
-
-void Solver::substepWithThetaMethod(double theta, double maxdt, double& dt, bool& completed)
-{
-    throw;
 }
 

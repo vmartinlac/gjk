@@ -38,8 +38,27 @@ protected slots:
 protected:
 
     void syncRepresentation();
-    void substepWithExplicitEulerMethod(double maxdt, double& effectivedt, bool& completed);
-    void substepWithThetaMethod(double theta, double maxdt, double& effectivedt, bool& completed);
+
+protected:
+
+    class CrankNicholsonMethod
+    {
+    public:
+        CrankNicholsonMethod(Solver* solver, double theta=0.5);
+        void run(double maxdt, double& dt, bool& completed);
+    protected:
+        double _theta;
+        Solver* _solver;
+    };
+
+    class ExplicitEulerMethod
+    {
+    public:
+        ExplicitEulerMethod(Solver* solver);
+        void run(double maxdt, double& dt, bool& completed);
+    protected:
+        Solver* _solver;
+    };
 
 protected:
 
