@@ -38,6 +38,12 @@ protected slots:
 protected:
 
     void syncRepresentation();
+    void retrieveCurrentState(Eigen::VectorXd& X);
+    void computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f);
+    void normalizeState(Eigen::VectorXd& X);
+    void applyState(const Eigen::VectorXd& X);
+    Body::State extractIndividualState(const Eigen::VectorXd& X, int id);
+    void computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt, bool& completed);
 
 protected:
 
@@ -46,6 +52,8 @@ protected:
     public:
         CrankNicholsonMethod(Solver* solver, double theta=0.5);
         void run(double maxdt, double& dt, bool& completed);
+    protected:
+        void retrieveCurrentState(Eigen::Vector3d& Y);
     protected:
         double _theta;
         Solver* _solver;
@@ -63,6 +71,7 @@ protected:
 protected:
 
     int _numBodies;
+    int _dim;
     osg::ref_ptr< osg::Group > _node;
     std::vector< BodyPtr > _bodies;
     std::vector< SpringPtr > _springs;
@@ -70,5 +79,8 @@ protected:
     int _timestep;
     double _time;
     static Solver* _instance;
+    Eigen::Vector3d _gravity;
+    double _linearViscosity;
+    double _angularViscosity;
 };
 
