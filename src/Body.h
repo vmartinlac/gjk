@@ -40,84 +40,72 @@ public:
 
     Body();
 
-    void syncRepresentation();
-
     virtual BoxBody* asBox();
-
     virtual SphereBody* asSphere();
 
     bool isBox() { return asBox() != nullptr; }
-
     bool isSphere() { return asSphere() != nullptr; }
+
+    // bounding sphere is given in world frame.
 
     virtual BoundingSphere getBoundingSphere() = 0;
 
+    // the representation if the osg node representing the body.
+
+    osg::PositionAttitudeTransform* getRepresentation() { return _representation.get(); }
+    void setRepresentation(osg::ref_ptr<osg::PositionAttitudeTransform> node) { _representation = node; }
+    void syncRepresentation();
+
+    // initial and current mechanical state of the body.
+
     State& initialState() { return _initialState; }
-    State& collisionDetectionState() { return _collisionDetectionState; }
-    State& representationState() { return _representationState; }
+    State& currentState() { return _currentState; }
+    State& collisionState() { return _currentState; }
 
-    State& stateDerivative() { return _stateDerivative; }
+    // id is a number used by the solver to identify the body and is unique to each body.
+    // it is set by the solver.
 
-    Eigen::Vector3d& resultantForce() { return _resultantForce; }
-    Eigen::Vector3d& resultantTorque() { return _resultantTorque; }
+    int getId() { return _id; }
+    void setId(int id) { _id = id; }
 
     // total mass of the body.
-    double getMass()
-    {
-        return _mass;
-    }
 
-    bool isMoving()
-    {
-        return _moving;
-    }
+    double getMass() { return _mass; }
+    void setMass(double m) { _mass = m; }
 
-    void setMoving(bool value)
-    {
-        _moving = value;
-    }
+    // wether the body moves according to the laws of classical dynamics or is fixed.
 
-    // center of mass of the body (body frame).
-    const Eigen::Vector3d& getCenterOfMass()
-    {
-        return _centerOfMass;
-    }
+    bool isMoving() { return _moving; }
+    bool isFixed() { return !_moving; }
+    void setMoving() { _moving = true; }
+    void setFixed() { _moving = false; }
 
-    // inertia tensor of the body (body frame).
-    const Eigen::Matrix3d& getInertiaTensor()
-    {
-        return _inertiaTensor;
-    }
+    // center of mass of the body (given in body frame).
 
-    // solver to inverse the inertia tensor of the body (body frame).
-    const Eigen::LDLT< Eigen::Matrix3d >& getInertiaTensorSolver()
-    {
-        return _inertiaTensorSolver;
-    }
+    const Eigen::Vector3d& getCenterOfMass() { return _centerOfMass; }
+    void setCenterOfMass(const Eigen::Vector3d& x) { _centerOfMass = x; }
 
-    // openscenegraph node representing the body.
-    osg::ref_ptr<osg::PositionAttitudeTransform> getRepresentation()
-    {
-        return _representation;
-    }
+    // inertia tensor of the body (given in body frame).
 
-protected:
+    const Eigen::Matrix3d& getInertiaTensor() { return _inertiaTensor; }
+    void setInertiaTensor(const Eigen::Matrix3d& I) { _inertiaTensor = I; _inertiaTensorSolver.compute(I); }
 
+    // solver to inverse the inertia tensor of the body (given in body frame).
+
+    const Eigen::LDLT< Eigen::Matrix3d >& getInertiaTensorSolver() { return _inertiaTensorSolver; }
+
+private:
+
+    int _id;
+    State _initialState;
+    State _currentState;
+    State _collisionState;
     double _mass;
     bool _moving;
     Eigen::Vector3d _centerOfMass;
     Eigen::Matrix3d _inertiaTensor;
     Eigen::LDLT< Eigen::Matrix3d > _inertiaTensorSolver;
     osg::ref_ptr<osg::PositionAttitudeTransform> _representation;
-
-private:
-
-    State _initialState;
-    State _representationState;
-    State _collisionDetectionState;
-    State _stateDerivative;
-    Eigen::Vector3d _resultantForce;
-    Eigen::Vector3d _resultantTorque;
 };
 
 typedef std::shared_ptr<Body> BodyPtr;

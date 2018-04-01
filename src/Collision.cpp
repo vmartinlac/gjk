@@ -50,10 +50,10 @@ bool Collision::detectBoxBox(BoxBody* b1, BoxBody* b2, Eigen::Vector3d& collisio
 {
     const Eigen::Vector3d L1 = 0.5 * b1->getSize();
     const Eigen::Vector3d L2 = 0.5 * b2->getSize();
-    const Eigen::Matrix3d R1 = b1->collisionDetectionState().attitude.toRotationMatrix();
-    const Eigen::Matrix3d R2 = b2->collisionDetectionState().attitude.toRotationMatrix();
-    const Eigen::Vector3d P1 = b1->collisionDetectionState().position;
-    const Eigen::Vector3d P2 = b2->collisionDetectionState().position;
+    const Eigen::Matrix3d R1 = b1->collisionState().attitude.toRotationMatrix();
+    const Eigen::Matrix3d R2 = b2->collisionState().attitude.toRotationMatrix();
+    const Eigen::Vector3d P1 = b1->collisionState().position;
+    const Eigen::Vector3d P2 = b2->collisionState().position;
 
     Eigen::Matrix<double, 3, 15> candidates_n;
     candidates_n.col(0) = R1.col(0);
@@ -97,8 +97,8 @@ bool Collision::detectBoxBox(BoxBody* b1, BoxBody* b2, Eigen::Vector3d& collisio
 
 bool Collision::detectSphereSphere(SphereBody* b1, SphereBody* b2, Eigen::Vector3d& collision_point)
 {
-    const Eigen::Vector3d C1 = b1->collisionDetectionState().position;
-    const Eigen::Vector3d C2 = b2->collisionDetectionState().position;
+    const Eigen::Vector3d C1 = b1->collisionState().position;
+    const Eigen::Vector3d C2 = b2->collisionState().position;
     const double R1 = b1->getRadius();
     const double R2 = b2->getRadius();
 
@@ -109,7 +109,7 @@ bool Collision::detectSphereBox(SphereBody* b1, BoxBody* b2, Eigen::Vector3d& co
 {
     // the center of the sphere (b2 frame).
     Eigen::Vector3d center =
-        b2->collisionDetectionState().attitude.inverse() * (b1->collisionDetectionState().position - b2->collisionDetectionState().position);
+        b2->collisionState().attitude.inverse() * (b1->collisionState().position - b2->collisionState().position);
 
     const Eigen::Vector3d halfsize = 0.5 * b2->getSize();
 

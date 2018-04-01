@@ -38,10 +38,13 @@ protected slots:
 protected:
 
     void syncRepresentation();
+    void substepWithExplicitEulerMethod(double maxdt, double& effectivedt, bool& completed);
+    void substepWithThetaMethod(double theta, double maxdt, double& effectivedt, bool& completed);
 
 protected:
 
-    osg::ref_ptr<osg::Group> _node;
+    int _numBodies;
+    osg::ref_ptr< osg::Group > _node;
     std::vector< BodyPtr > _bodies;
     std::vector< SpringPtr > _springs;
     QTimer* _timer;

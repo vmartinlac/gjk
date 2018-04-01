@@ -31,11 +31,12 @@ Spring::Spring()
 
 void Spring::syncRepresentation()
 {
-    const Eigen::Vector3d P1 = _body1->representationState().position + _body1->representationState().attitude * _anchor1;
-    const Eigen::Vector3d P2 = _body2->representationState().position + _body2->representationState().attitude * _anchor2;
+    const Eigen::Vector3d P1 = getWorldFrameAnchor1();
+    const Eigen::Vector3d P2 = getWorldFrameAnchor2();
 
     _PAT1->setPosition(osg::Vec3d(P1.x(), P1.y(), P1.z()));
     _PAT2->setPosition(osg::Vec3d(P2.x(), P2.y(), P2.z()));
+
     /*
     const Eigen::Vector3d dir = (P2 - P1).normalized();
 

@@ -12,6 +12,8 @@ public:
 
     Spring();
 
+    // physical characteristics of the spring.
+
     double getFreeLength() { return _freeLength; }
     void setFreeLength(double value) { _freeLength = value; }
 
@@ -22,54 +24,28 @@ public:
     double getElasticityCoefficient() { return _elasticityCoefficient; }
     void setElasticityCoefficient(double value) { _elasticityCoefficient = value; }
 
-    Body* getBody1() { return _body1; }
-    void setBody1(Body* b) { _body1 = b; }
+    // get or set the two bodies bound by the spring.
 
+    Body* getBody1() { return _body1; }
     Body* getBody2() { return _body2; }
+
+    void setBody1(Body* b) { _body1 = b; }
     void setBody2(Body* b) { _body2 = b; }
 
-    // anchor points are given in local frame.
+    // unless stated otherwise, anchor points are given in their respective body frame.
 
     Eigen::Vector3d getAnchor1() { return _anchor1; }
-    void setAnchor1(Eigen::Vector3d a) { _anchor1 = a; }
-
     Eigen::Vector3d getAnchor2() { return _anchor2; }
+
+    void setAnchor1(Eigen::Vector3d a) { _anchor1 = a; }
     void setAnchor2(Eigen::Vector3d a) { _anchor2 = a; }
 
-    Body* getOtherBody(Body* thisone)
-    {
-        if(thisone == _body1)
-        {
-            return _body2;
-        }
-        else if(thisone == _body2)
-        {
-            return _body1;
-        }
-        else
-        {
-            throw std::runtime_error("Incorrect usage of String::other.");
-        }
-    }
+    Eigen::Vector3d getWorldFrameAnchor1() { return _body1->currentState().position + _body1->currentState().attitude * _anchor1; }
+    Eigen::Vector3d getWorldFrameAnchor2() { return _body2->currentState().position + _body2->currentState().attitude * _anchor2; }
 
-    Eigen::Vector3d getOtherAnchor(Body* thisone)
-    {
-        if(thisone == _body1)
-        {
-            return _anchor2;
-        }
-        else if(thisone == _body2)
-        {
-            return _anchor1;
-        }
-        else
-        {
-            throw std::runtime_error("Incorrect usage of String::other.");
-        }
-    }
+    // osg representation.
 
     osg::Node* getRepresentation() { return _node.get(); }
-
     void syncRepresentation();
 
 protected:

@@ -36,17 +36,17 @@ int main(int num_args, char** args)
     {
         BodyPtr body1( new SphereBody(1.0, CTE_WOOD_DENSITY) );
         body1->initialState().position << -3.0, 0.0, 3.0;
-        body1->setMoving(true);
+        body1->setMoving();
         solver->addBody(body1);
 
         BodyPtr body2( new SphereBody(1.0, CTE_WOOD_DENSITY) );
         body2->initialState().position << -3.0, 0.0, 10.0;
-        body2->setMoving(true);
+        body2->setMoving();
         solver->addBody(body2);
 
         BodyPtr body3( new BoxBody( Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_WOOD_DENSITY ) );
         body3->initialState().position << 3.0, 0.0, 10.0;
-        body3->setMoving(true);
+        body3->setMoving();
         solver->addBody(body3);
 
         BodyPtr body5( new BoxBody( Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_WOOD_DENSITY ) );
@@ -57,7 +57,7 @@ int main(int num_args, char** args)
         );
         body5->initialState().linear_momentum << 0.0, 0.0, 100000.0;
         body5->initialState().angular_momentum << 20000.0, 0.0, 0.0;
-        body5->setMoving(true);
+        body5->setMoving();
         solver->addBody(body5);
 
         BodyPtr body4( new BoxBody( Eigen::Vector3d{20.0, 20.0, 1.0}, CTE_IRON_DENSITY ) );
@@ -73,7 +73,7 @@ int main(int num_args, char** args)
     {
         BodyPtr body3( new BoxBody( Eigen::Vector3d{16.0, 2.0, 2.0}, CTE_WOOD_DENSITY ) );
         body3->initialState().position << 8.0, 0.0, -1.0;
-        body3->setMoving(true);
+        body3->setMoving();
         solver->addBody(body3);
     }
     else if(num == 2)
@@ -86,13 +86,13 @@ int main(int num_args, char** args)
 
         SphereBody* sphere = new SphereBody(R, rho);
         sphere->initialState().position << 2.0, 0.0, 2.0;
-        sphere->setMoving(false);
+        sphere->setFixed();
         solver->addBody( BodyPtr(sphere) );
 
         for(int i=1; i<N; i++)
         {
             SphereBody* new_sphere = new SphereBody(R, rho);
-            new_sphere->setMoving(true);
+            new_sphere->setMoving();
             new_sphere->initialState().position = sphere->initialState().position + (L + 2*R) * dir;
             solver->addBody( BodyPtr(new_sphere) );
 
@@ -109,7 +109,7 @@ int main(int num_args, char** args)
             sphere = new_sphere;
         }
 
-        sphere->setMoving(false);
+        sphere->setFixed();
     }
     else
     {
