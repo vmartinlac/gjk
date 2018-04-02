@@ -80,7 +80,7 @@ void Solver::addSpring( SpringPtr spring )
     _node->addChild( spring->getRepresentation() );
 }
 
-void Solver::init()
+void Solver::home()
 {
     for(BodyPtr& b : _bodies)
     {
@@ -97,6 +97,14 @@ void Solver::startSimulation()
 void Solver::stopSimulation()
 {
     _timer->stop();
+}
+
+void Solver::clear()
+{
+    _bodies.clear();
+    _springs.clear();
+    _numBodies = 0;
+    _dim = 0;
 }
 
 void Solver::syncRepresentation()
@@ -154,15 +162,6 @@ void Solver::step()
                             b2.get(),
                             collision_point);
                     }
-                }
-
-                if(collision)
-                {
-                    ;
-                }
-                else
-                {
-                    b1->representationState() = b1->collisionDetectionState();
                 }
             }
         }
@@ -356,34 +355,62 @@ void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed
 
         Eigen::VectorXd RHS = F0 - (1.0/dt)*X + (1.0-_theta)*f;
 
-        // compute the coefficients of the jacobian matrix.
+        // compute how much space to reserve for the jacobian matrix.
 
-        std::vector< Eigen::Triplet<double> > triplets;
-        //triplets.reserve(d + _solver->_numBodies*(3+3+4+
+        Eigen::VectorXi reservation(d);
+
+        for(int i=0; i<_solver->_numBodies; i++)
+        {
+            reservation.segment<3>(13*i+0) = Eigen::VectorXi::Constant(3, 2);
+            reservation.segment<4>(13*i+3) = Eigen::VectorXi::Constant(4, 3);
+            reservation.segment<6>(13*i+7) = Eigen::VectorXi::Constant(6, 2);
+        }
+
+        for(SpringPtr spring : _solver->_springs)
+        {
+            const int id1 = spring->getBody1()->getId();
+            const int id2 = spring->getBody2()->getId();
+
+            reservation.segment<6>(13*id1+7) += Eigen::VectorXi::Constant(6, 1);
+            reservation.segment<6>(13*id2+7) += Eigen::VectorXi::Constant(6, 1);
+        }
+
+        // compute the jacobian matrix.
+
+        Eigen::SparseMatrix<double> gradient(d, d);
+        gradient.reserve(reservation);
 
         for(int i=0; i<d; i++)
         {
-            triplets.push_back( Eigen::Triplet<double>(i, i, 1.0/dt) );
+            gradient.coeffRef(i, i) += 1.0/dt;
         }
 
         const double cte = -(1.0-_theta);
+
         for(int i=0; i<_solver->_numBodies; i++)
         {
             BodyPtr body = _solver->_bodies[i];
             Body::State state = _solver->extractIndividualState(X, i);
 
-            //triplets.push;
+            gradient.coeffRef(13*i+0, 13*i+7) = 1.0 / body->getMass();
+            gradient.coeffRef(13*i+1, 13*i+8) = 1.0 / body->getMass();
+            gradient.coeffRef(13*i+2, 13*i+9) = 1.0 / body->getMass();
+
+            gradient.coeffRef(13*i+7, 13*i+7) = -_solver->_linearViscosity / body->getMass();
+            gradient.coeffRef(13*i+8, 13*i+8) = -_solver->_linearViscosity / body->getMass();
+            gradient.coeffRef(13*i+9, 13*i+9) = -_solver->_linearViscosity / body->getMass();
+
+            /*
+            gradient.coeffRef(13*i+10, 13*i+10) = -_angularViscosity / body->getMass();
+            gradient.coeffRef(13*i+11, 13*i+11) = -_angularViscosity / body->getMass();
+            gradient.coeffRef(13*i+12, 13*i+12) = -_angularViscosity / body->getMass();
+            */
         }
 
         for(SpringPtr spring : _solver->_springs)
         {
             ;
         }
-
-        // build the jacobian matrix.
-
-        Eigen::SparseMatrix<double> gradient(d, d);
-        gradient.setFromTriplets(triplets.begin(), triplets.end());
 
         // find dX by resolving the linear system.
 
@@ -398,8 +425,8 @@ void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed
 
         // test if we continue.
 
-        go_on = false;
         /*
+        go_on = false;
         for(int i=0; go_on == false && i<_solver->_numBodies; i++)
         {
             const double bsradius = _solver->_bodies[i]->getBoundingBox().radius;

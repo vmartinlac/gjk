@@ -116,7 +116,7 @@ int main(int num_args, char** args)
         throw;
     }
 
-    solver->init();
+    solver->home();
 
     MainWindow* w = new MainWindow;
     w->show();

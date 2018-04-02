@@ -144,7 +144,7 @@ void ViewerWidget::resizeGL(int width, int height)
 
 void ViewerWidget::init()
 {
-    Solver::instance()->init();
+    Solver::instance()->home();
     //_viewer->home();
     update();
 }

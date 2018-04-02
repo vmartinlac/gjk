@@ -27,9 +27,10 @@ public:
 
 public slots:
 
-    void init();
+    void home();
     void startSimulation();
     void stopSimulation();
+    void clear();
 
 protected slots:
 
