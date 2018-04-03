@@ -50,6 +50,7 @@ protected:
 
     class CrankNicholsonMethod;
     class ExplicitEulerMethod;
+    class SemiimplicitEulerMethod;
     class RK4Method;
 
 protected:

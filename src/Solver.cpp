@@ -21,6 +21,7 @@ protected:
     void functionF(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
     void functionG(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
     void inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X);
+    void constructJacobianOfF(const Eigen::VectorXd& X, double delta_t, Eigen::SparseMatrix<double>& jacobian);
 protected:
     double _theta;
     Solver* _solver;
@@ -39,6 +40,15 @@ class Solver::ExplicitEulerMethod
 {
 public:
     ExplicitEulerMethod(Solver* solver);
+    void run(double maxdt, double& dt, bool& completed);
+protected:
+    Solver* _solver;
+};
+
+class Solver::SemiimplicitEulerMethod
+{
+public:
+    SemiimplicitEulerMethod(Solver* solver);
     void run(double maxdt, double& dt, bool& completed);
 protected:
     Solver* _solver;
@@ -70,6 +80,11 @@ Solver::Solver()
     _gravity = Eigen::Vector3d{0.0, 0.0, -9.81};
     _linearViscosity = 5.0e3;
     _angularViscosity = 1.0e5;
+
+    //////
+    _linearViscosity = 0.0;
+    _angularViscosity = 0.0;
+    //////
 
     // create axes node.
 
@@ -168,15 +183,17 @@ void Solver::step()
 
     while(go_on)
     {
-        //CrankNicholsonMethod method(this);
-        ExplicitEulerMethod method(this);
-
         bool completed;
-        double effectivedt;
-        method.run(time_left, effectivedt, completed);
+        double dt;
+
+        CrankNicholsonMethod method(this);
+        //RK4Method method(this);
+        //ExplicitEulerMethod method(this);
+
+        method.run(time_left, dt, completed);
 
         go_on = !completed;
-        time_left -= effectivedt;
+        time_left -= dt;
 
         // detect collisions.
 
@@ -409,94 +426,85 @@ void Solver::CrankNicholsonMethod::functionG(const Eigen::VectorXd& X, double de
 
 void Solver::CrankNicholsonMethod::inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X)
 {
-    // TODO
-}
+    X = X0;
 
-/*
-    F0 = (1.0/dt) * X + _theta*f;
-
+    int max_iterations = 300;
     bool go_on = true;
-    while(go_on)
+    while(go_on && max_iterations > 0)
     {
-        // compute RHS of the linear system.
+        Eigen::VectorXd F;
+        functionF(X, delta_t, F);
 
-        Eigen::VectorXd RHS = F0 - (1.0/dt)*X + (1.0-_theta)*f;
+        Eigen::SparseMatrix<double> jacobian;
+        constructJacobianOfF(X, delta_t, jacobian);
 
-        // compute how much space to reserve for the jacobian matrix.
+        Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > solver;
+        solver.compute(jacobian);
 
-        Eigen::VectorXi reservation(d);
-
-        for(int i=0; i<_solver->_numBodies; i++)
-        {
-            reservation.segment<3>(13*i+0) = Eigen::VectorXi::Constant(3, 2);
-            reservation.segment<4>(13*i+3) = Eigen::VectorXi::Constant(4, 3);
-            reservation.segment<6>(13*i+7) = Eigen::VectorXi::Constant(6, 2);
-        }
-
-        for(SpringPtr spring : _solver->_springs)
-        {
-            const int id1 = spring->getBody1()->getId();
-            const int id2 = spring->getBody2()->getId();
-
-            reservation.segment<6>(13*id1+7) += Eigen::VectorXi::Constant(6, 1);
-            reservation.segment<6>(13*id2+7) += Eigen::VectorXi::Constant(6, 1);
-        }
-
-        // compute the jacobian matrix.
-
-        Eigen::SparseMatrix<double> gradient(d, d);
-        gradient.reserve(reservation);
-
-        for(int i=0; i<d; i++)
-        {
-            gradient.coeffRef(i, i) += 1.0/dt;
-        }
-
-        const double cte = -(1.0-_theta);
-
-        for(int i=0; i<_solver->_numBodies; i++)
-        {
-            BodyPtr body = _solver->_bodies[i];
-            Body::State state = _solver->extractIndividualState(X, i);
-
-            gradient.coeffRef(13*i+0, 13*i+7) = 1.0 / body->getMass();
-            gradient.coeffRef(13*i+1, 13*i+8) = 1.0 / body->getMass();
-            gradient.coeffRef(13*i+2, 13*i+9) = 1.0 / body->getMass();
-
-            gradient.coeffRef(13*i+7, 13*i+7) = -_solver->_linearViscosity / body->getMass();
-            gradient.coeffRef(13*i+8, 13*i+8) = -_solver->_linearViscosity / body->getMass();
-            gradient.coeffRef(13*i+9, 13*i+9) = -_solver->_linearViscosity / body->getMass();
-        }
-
-        for(SpringPtr spring : _solver->_springs)
-        {
-            ;
-        }
-
-        // find dX by resolving the linear system.
-
-        Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > cg;
-        cg.compute(gradient);
-        Eigen::VectorXd dX = cg.solve(RHS);
-
-        // update the state.
-
-        X += dX;
+        Eigen::VectorXd DX = solver.solve(Y-F);
+        X += DX;
         _solver->normalizeState(X);
 
-        // test if we continue.
+        go_on = (DX.lpNorm<1>() > 1.0e-2);
+        max_iterations--;
+    }
+}
 
-        go_on = dX.lpNorm<Eigen::Infinity>() > 0.01;
+void Solver::CrankNicholsonMethod::constructJacobianOfF(const Eigen::VectorXd& X, double delta_t, Eigen::SparseMatrix<double>& jacobian)
+{
+    // TODO !
+    throw;
 
-        if(go_on)
-        {
-            _solver->computeStateDerivative(X, f);
-        }
+    const int d = _solver->_dim;
+
+    Eigen::VectorXi reservation(d);
+
+    for(int i=0; i<_solver->_numBodies; i++)
+    {
+        reservation.segment<3>(13*i+0) = Eigen::VectorXi::Constant(3, 2);
+        reservation.segment<4>(13*i+3) = Eigen::VectorXi::Constant(4, 3);
+        reservation.segment<6>(13*i+7) = Eigen::VectorXi::Constant(6, 2);
     }
 
-    _solver->applyState(X);
+    for(SpringPtr spring : _solver->_springs)
+    {
+        const int id1 = spring->getBody1()->getId();
+        const int id2 = spring->getBody2()->getId();
+
+        reservation.segment<6>(13*id1+7) += Eigen::VectorXi::Constant(6, 1);
+        reservation.segment<6>(13*id2+7) += Eigen::VectorXi::Constant(6, 1);
+    }
+
+    jacobian.resize(d, d);
+    jacobian.setZero();
+    jacobian.reserve(reservation);
+
+    for(int i=0; i<d; i++)
+    {
+        jacobian.coeffRef(i, i) += 1.0/delta_t;
+    }
+
+    const double cte = -(1.0-_theta);
+
+    for(int i=0; i<_solver->_numBodies; i++)
+    {
+        BodyPtr body = _solver->_bodies[i];
+        Body::State state = _solver->extractIndividualState(X, i);
+
+        jacobian.coeffRef(13*i+0, 13*i+7) = 1.0 / body->getMass();
+        jacobian.coeffRef(13*i+1, 13*i+8) = 1.0 / body->getMass();
+        jacobian.coeffRef(13*i+2, 13*i+9) = 1.0 / body->getMass();
+
+        jacobian.coeffRef(13*i+7, 13*i+7) = -_solver->_linearViscosity / body->getMass();
+        jacobian.coeffRef(13*i+8, 13*i+8) = -_solver->_linearViscosity / body->getMass();
+        jacobian.coeffRef(13*i+9, 13*i+9) = -_solver->_linearViscosity / body->getMass();
+    }
+
+    for(SpringPtr spring : _solver->_springs)
+    {
+        ;
+    }
 }
-*/
 
 // Explicit Euler method.
 
@@ -533,6 +541,49 @@ Solver::RK4Method::RK4Method(Solver* solver)
 
 void Solver::RK4Method::run(double maxdt, double& dt, bool& completed)
 {
+    completed = true;
+    dt = maxdt;
+
+    Eigen::VectorXd X;
+    _solver->retrieveCurrentState(X);
+
+    _solver->computeTimestep(X, maxdt, dt, completed);
+
+    Eigen::VectorXd f1;
+    _solver->computeStateDerivative(X, f1);
+
+    Eigen::VectorXd f2;
+    Eigen::VectorXd X2 = X + 0.5*dt*f1;
+    _solver->normalizeState(X2);
+    _solver->computeStateDerivative(X2, f2);
+
+    Eigen::VectorXd f3;
+    Eigen::VectorXd X3 = X + 0.5*dt*f2;
+    _solver->normalizeState(X3);
+    _solver->computeStateDerivative(X3, f3);
+
+    Eigen::VectorXd f4;
+    Eigen::VectorXd X4 = X + dt*f3;
+    _solver->normalizeState(X4);
+    _solver->computeStateDerivative(X4, f4);
+
+    Eigen::VectorXd f = (1.0/6.0) * ( f1 + 2.0*f2 + 2.0*f3 + f4 );
+    X += dt*f;
+    _solver->normalizeState(X);
+    _solver->applyState(X);
+}
+
+// Semiimplicit Euler method.
+
+Solver::SemiimplicitEulerMethod::SemiimplicitEulerMethod(Solver* solver)
+{
+    _solver = solver;
+}
+
+void Solver::SemiimplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
+{
+    // TODO !
+    throw;
     /*
     completed = true;
     dt = maxdt;
@@ -546,10 +597,11 @@ void Solver::RK4Method::run(double maxdt, double& dt, bool& completed)
     _solver->computeStateDerivative(X, f);
 
     X += dt*f;
-
     _solver->normalizeState(X);
+
+    Eigen::VectorXd f;
+    _solver->computeStateDerivative(X, f);
+
     _solver->applyState(X);
     */
-    throw std::runtime_error("not implemented !"); //TODO
 }
-

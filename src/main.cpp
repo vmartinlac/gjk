@@ -82,7 +82,7 @@ int main(int num_args, char** args)
         const double rho = CTE_WOOD_DENSITY; // density of a ball.
         const double L = 1.0; // distance between consecutive balls / free length of springs.
         Eigen::Vector3d dir{1.0, 0.0, 0.0}; // direction along which balls are aligned.
-        const int N = 15; // number of balls.
+        const int N = 3; // number of balls.
 
         SphereBody* sphere = new SphereBody(R, rho);
         sphere->initialState().position << 2.0, 0.0, 2.0;
@@ -99,7 +99,7 @@ int main(int num_args, char** args)
             Spring* spring = new Spring;
             spring->setFreeLength(L);
             spring->setDampingCoefficient( 0.0 );
-            spring->setElasticityCoefficient( sphere->getMass()*9.81/0.5 );
+            spring->setElasticityCoefficient( sphere->getMass()*9.81/0.15 );
             spring->setBody1(sphere);
             spring->setBody2(new_sphere);
             spring->setAnchor1(R*dir);
@@ -109,7 +109,7 @@ int main(int num_args, char** args)
             sphere = new_sphere;
         }
 
-        sphere->setFixed();
+        //sphere->setFixed();
     }
     else
     {
