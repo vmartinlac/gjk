@@ -6,6 +6,46 @@
 #include "Solver.h"
 #include "Collision.h"
 
+// declarations of classes in charge of solving ODE.
+
+class Solver::CrankNicholsonMethod
+{
+public:
+    CrankNicholsonMethod(Solver* solver, double theta=0.5);
+    void run(double maxdt, double& dt, bool& completed);
+protected:
+    /*
+    At each timestep, we solve :
+    $$ F( X_{n+1} ) = G( X_n ) $$
+    */
+    void functionF(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
+    void functionG(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
+    void inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X);
+protected:
+    double _theta;
+    Solver* _solver;
+};
+
+class Solver::RK4Method
+{
+public:
+    RK4Method(Solver* solver);
+    void run(double maxdt, double& dt, bool& completed);
+protected:
+    Solver* _solver;
+};
+
+class Solver::ExplicitEulerMethod
+{
+public:
+    ExplicitEulerMethod(Solver* solver);
+    void run(double maxdt, double& dt, bool& completed);
+protected:
+    Solver* _solver;
+};
+
+// solver class.
+
 Solver* Solver::_instance = nullptr;
 
 Solver::Solver()
@@ -337,15 +377,42 @@ Solver::CrankNicholsonMethod::CrankNicholsonMethod(Solver* solver, double theta)
 
 void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed)
 {
-    const int d = _solver->_dim;
+    Eigen::VectorXd Xpre;
+    _solver->retrieveCurrentState(Xpre);
 
+    _solver->computeTimestep(Xpre, maxdt, dt, completed);
+
+    Eigen::VectorXd G;
+    functionG(Xpre, dt, G);
+
+    Eigen::VectorXd Xpost;
+    inverseF(G, Xpre, dt, Xpost);
+
+    _solver->applyState(Xpost);
+}
+
+void Solver::CrankNicholsonMethod::functionF(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y)
+{
     Eigen::VectorXd f;
-    Eigen::VectorXd F0;
-    Eigen::VectorXd X;
-
-    _solver->retrieveCurrentState(X);
-    _solver->computeTimestep(X, maxdt, dt, completed);
     _solver->computeStateDerivative(X, f);
+
+    Y = (1.0/delta_t)*X - (1.0-_theta)*f;
+}
+
+void Solver::CrankNicholsonMethod::functionG(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y)
+{
+    Eigen::VectorXd f;
+    _solver->computeStateDerivative(X, f);
+
+    Y = (1.0/delta_t)*X + _theta*f;
+}
+
+void Solver::CrankNicholsonMethod::inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X)
+{
+    // TODO
+}
+
+/*
     F0 = (1.0/dt) * X + _theta*f;
 
     bool go_on = true;
@@ -399,12 +466,6 @@ void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed
             gradient.coeffRef(13*i+7, 13*i+7) = -_solver->_linearViscosity / body->getMass();
             gradient.coeffRef(13*i+8, 13*i+8) = -_solver->_linearViscosity / body->getMass();
             gradient.coeffRef(13*i+9, 13*i+9) = -_solver->_linearViscosity / body->getMass();
-
-            /*
-            gradient.coeffRef(13*i+10, 13*i+10) = -_angularViscosity / body->getMass();
-            gradient.coeffRef(13*i+11, 13*i+11) = -_angularViscosity / body->getMass();
-            gradient.coeffRef(13*i+12, 13*i+12) = -_angularViscosity / body->getMass();
-            */
         }
 
         for(SpringPtr spring : _solver->_springs)
@@ -425,19 +486,6 @@ void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed
 
         // test if we continue.
 
-        /*
-        go_on = false;
-        for(int i=0; go_on == false && i<_solver->_numBodies; i++)
-        {
-            const double bsradius = _solver->_bodies[i]->getBoundingBox().radius;
-
-            Body::State s1 = _solver->extractIndividualState(X0, i);
-            Body::State s2 = _solver->extractIndividualState(X, i);
-
-            go_on = go_on || (s2.position - s1.position).norm() > 0.01*bsradius;
-            go_on = go_on || 
-        }
-        */
         go_on = dX.lpNorm<Eigen::Infinity>() > 0.01;
 
         if(go_on)
@@ -448,6 +496,7 @@ void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed
 
     _solver->applyState(X);
 }
+*/
 
 // Explicit Euler method.
 
@@ -473,5 +522,34 @@ void Solver::ExplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
 
     _solver->normalizeState(X);
     _solver->applyState(X);
+}
+
+// Runge Kutta 4 method.
+
+Solver::RK4Method::RK4Method(Solver* solver)
+{
+    _solver = solver;
+}
+
+void Solver::RK4Method::run(double maxdt, double& dt, bool& completed)
+{
+    /*
+    completed = true;
+    dt = maxdt;
+
+    Eigen::VectorXd X;
+    _solver->retrieveCurrentState(X);
+
+    _solver->computeTimestep(X, maxdt, dt, completed);
+
+    Eigen::VectorXd f;
+    _solver->computeStateDerivative(X, f);
+
+    X += dt*f;
+
+    _solver->normalizeState(X);
+    _solver->applyState(X);
+    */
+    throw std::runtime_error("not implemented !"); //TODO
 }
 

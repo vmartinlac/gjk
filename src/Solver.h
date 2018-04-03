@@ -48,26 +48,9 @@ protected:
 
 protected:
 
-    class CrankNicholsonMethod
-    {
-    public:
-        CrankNicholsonMethod(Solver* solver, double theta=0.5);
-        void run(double maxdt, double& dt, bool& completed);
-    protected:
-        void retrieveCurrentState(Eigen::Vector3d& Y);
-    protected:
-        double _theta;
-        Solver* _solver;
-    };
-
-    class ExplicitEulerMethod
-    {
-    public:
-        ExplicitEulerMethod(Solver* solver);
-        void run(double maxdt, double& dt, bool& completed);
-    protected:
-        Solver* _solver;
-    };
+    class CrankNicholsonMethod;
+    class ExplicitEulerMethod;
+    class RK4Method;
 
 protected:
 

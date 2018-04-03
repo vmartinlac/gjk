@@ -5,7 +5,9 @@
     
 * résolution des équations d'Euler.
     * finir implémentation Crank-Nicholson.
-    * ajouter résolution à l'aide de la librairie boost.
+    * implémenter RK4
+    * se renseigner sur Verlet.
+    * ajouter support de la librairie boost.
 
 * fonctionnalité UI
     * charger une scène depuis preset.
