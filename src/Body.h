@@ -23,10 +23,10 @@ public:
         // rotation from body to world frame.
         Eigen::Quaterniond attitude;
 
-        // linear momentum in local frame.
+        // linear momentum in world frame.
         Eigen::Vector3d linear_momentum;
 
-        // angular momentum in local frame.
+        // angular momentum in world frame.
         Eigen::Vector3d angular_momentum;
     };
 

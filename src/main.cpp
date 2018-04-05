@@ -31,7 +31,7 @@ int main(int num_args, char** args)
 
     Solver* solver = new Solver;
 
-    const int num = 2;
+    const int num = 3;
     if(num == 0)
     {
         BodyPtr body1( new SphereBody(1.0, CTE_WOOD_DENSITY) );
@@ -82,7 +82,7 @@ int main(int num_args, char** args)
         const double rho = CTE_WOOD_DENSITY; // density of a ball.
         const double L = 1.0; // distance between consecutive balls / free length of springs.
         Eigen::Vector3d dir{1.0, 0.0, 0.0}; // direction along which balls are aligned.
-        const int N = 3; // number of balls.
+        const int N = 6; // number of balls.
 
         SphereBody* sphere = new SphereBody(R, rho);
         sphere->initialState().position << 2.0, 0.0, 2.0;
@@ -109,7 +109,46 @@ int main(int num_args, char** args)
             sphere = new_sphere;
         }
 
-        //sphere->setFixed();
+        sphere->setFixed();
+    }
+    else if(num == 3)
+    {
+        const double R = 0.5; // radius of a ball.
+        const double rho = CTE_WOOD_DENSITY; // density of a ball.
+        Eigen::Vector3d L{ 10.0, 3.0, 3.0 };
+        const double M = 2.0;
+        Eigen::Vector3d X0{15.0, 15.0, 15.0};
+        Eigen::Vector3d dirx{1.0, 0.0, 0.0};
+        Eigen::Vector3d diry{0.0, 1.0, 0.0};
+
+        BoxBody* box = new BoxBody( L, rho );
+        box->initialState().position = X0;
+        solver->addBody( BodyPtr(box) );
+
+        //std::initializer_list<const char*> pts = { "++", "+-", "--" };
+        std::initializer_list<const char*> pts = { "++", "+-", "-+", "--" };
+
+        for(const char* ptr : pts)
+        {
+            //const double g1 = (i & 1) ? 1.0 : -1.0;
+            //const double g2 = (i & 2) ? 1.0 : -1.0;
+            const double g1 = (ptr[0] == '+') ? 1.0 : -1.0;
+            const double g2 = (ptr[1] == '+') ? 1.0 : -1.0;
+
+            SphereBody* s1 = new SphereBody(R, rho);
+            s1->initialState().position = X0 + g1*(0.5*L(0)+M)*dirx + g2*(0.5*L(1)+M)*diry;
+            s1->setFixed();
+            solver->addBody( BodyPtr(s1) );
+
+            SpringPtr spring1( new Spring );
+            spring1->setBody1(box);
+            spring1->setAnchor1(g1*0.5*L(0)*dirx + g2*0.5*L(1)*diry);
+            spring1->setBody2(s1);
+            spring1->setAnchor2(Eigen::Vector3d::Zero());
+            spring1->setFreeLength(M*M_SQRT2);
+            spring1->setElasticityCoefficient( box->getMass()*9.81/0.1 );
+            solver->addSpring(spring1);
+        }
     }
     else
     {

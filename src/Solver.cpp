@@ -186,9 +186,9 @@ void Solver::step()
         bool completed;
         double dt;
 
-        CrankNicholsonMethod method(this);
+        //CrankNicholsonMethod method(this);
         //RK4Method method(this);
-        //ExplicitEulerMethod method(this);
+        ExplicitEulerMethod method(this);
 
         method.run(time_left, dt, completed);
 
@@ -294,7 +294,7 @@ void Solver::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f
             Body::State state = extractIndividualState(X, i);
 
             const Eigen::Vector3d linear_velocity = state.linear_momentum / body->getMass();
-            const Eigen::Vector3d angular_velocity = body->getInertiaTensorSolver().solve( state.angular_momentum );
+            const Eigen::Vector3d angular_velocity = state.attitude * body->getInertiaTensorSolver().solve( state.attitude.inverse() * state.angular_momentum );
 
             Eigen::Vector3d resultant_force = Eigen::Vector3d::Zero();
             Eigen::Vector3d resultant_torque = Eigen::Vector3d::Zero();
@@ -306,7 +306,7 @@ void Solver::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f
             const int id = body->getId();
 
             f.segment<3>(13*id+0) = linear_velocity;
-            f.segment<4>(13*id+3) = 0.5 * ( state.attitude * Eigen::Quaterniond(0.0, angular_velocity.x(), angular_velocity.y(), angular_velocity.z()) ).coeffs();
+            f.segment<4>(13*id+3) = 0.5 * ( Eigen::Quaterniond(0.0, angular_velocity.x(), angular_velocity.y(), angular_velocity.z()) * state.attitude ).coeffs();
             f.segment<3>(13*id+7) = resultant_force;
             f.segment<3>(13*id+10) = resultant_torque;
         }
@@ -333,13 +333,13 @@ void Solver::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f
         if(B1->isMoving())
         {
             f.segment<3>(13*id1+7) += F;
-            f.segment<3>(13*id1+10) += spring->getAnchor1().cross( B1->currentState().attitude.inverse() * F );
+            f.segment<3>(13*id1+10) += (B1->currentState().attitude * spring->getAnchor1()).cross( F );
         }
 
         if(B2->isMoving())
         {
             f.segment<3>(13*id2+7) -= F;
-            f.segment<3>(13*id2+10) -= spring->getAnchor2().cross( B2->currentState().attitude.inverse() * F );
+            f.segment<3>(13*id2+10) -= (B2->currentState().attitude * spring->getAnchor2()).cross( F );
         }
     }
 }
