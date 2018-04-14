@@ -1,36 +1,19 @@
 #include <QSurfaceFormat>
 #include <QApplication>
 #include "Solver.h"
+#include "World.h"
+#include "BodyInstance.h"
+#include "BodyModel.h"
 #include "MainWindow.h"
 #include "PhysicalConstants.h"
 
 int main(int num_args, char** args)
 {
-    /*
-    gjk::SimplexPoints<2> points;
-    points.col(0) << 1.0, 1.0;
-    points.col(1) << 1.0, 5.0;
-    points.col(2) << 5.0, 1.0;
-
-    points.row(0).array() -= 2.0;
-    //points.row(1).array() -= 2.0;
-
-    int num_points = 3;
-
-    gjk::Vector<2> proximal;
-    gjk::distanceSubalgorithm(points, num_points, proximal);
-
-    std::cout << "Proximal : " << std::endl;
-    std::cout << proximal << std::endl;
-    std::cout << "New simplex : " << std::endl;
-    std::cout << points.leftCols(num_points) << std::endl;
-    return 0;
-    */
-
     QApplication app(num_args, args);
+    World world;
+    Solver solver;
 
-    Solver* solver = new Solver;
-
+    /*
     const int num = 3;
     if(num == 0)
     {
@@ -126,7 +109,8 @@ int main(int num_args, char** args)
         solver->addBody( BodyPtr(box) );
 
         //std::initializer_list<const char*> pts = { "++", "+-", "--" };
-        std::initializer_list<const char*> pts = { "++", "+-", "-+", "--" };
+        std::initializer_list<const char*> pts = { "++", "+-" };
+        //std::initializer_list<const char*> pts = { "++", "+-", "-+", "--" };
 
         for(const char* ptr : pts)
         {
@@ -147,6 +131,7 @@ int main(int num_args, char** args)
             spring1->setAnchor2(Eigen::Vector3d::Zero());
             spring1->setFreeLength(M*M_SQRT2);
             spring1->setElasticityCoefficient( box->getMass()*9.81/0.1 );
+            spring1->setDampingCoefficient( 9.81*box->getMass()/(1.0/0.5) );
             solver->addSpring(spring1);
         }
     }
@@ -154,15 +139,41 @@ int main(int num_args, char** args)
     {
         throw;
     }
+    */
 
-    solver->home();
+    std::shared_ptr<BodyModel> m1(new BoxBody(Eigen::Vector3d{50.0, 50.0, 0.5}, CTE_WOOD_DENSITY)); 
+    std::shared_ptr<BodyInstance> b1(new BodyInstance(m1));
+
+    std::shared_ptr<BodyModel> m2(new SphereBody(1.0, CTE_WOOD_DENSITY));
+    m2->asSphere()->setColor(0.7, 0.1, 0.1);
+    std::shared_ptr<BodyInstance> b2(new BodyInstance(m2));
+    std::shared_ptr<BodyInstance> b3(new BodyInstance(m2));
+    b2->initialState().position << -2.0, 0.0, 10.0;
+    b2->setMoving();
+
+    b3->initialState().position << 2.0, 0.0, 10.0;
+
+    std::shared_ptr<Spring> spring(new Spring);
+    spring->setBody1(b2);
+    spring->setBody2(b3);
+    spring->setAnchor1(Eigen::Vector3d{1.0, 0.0, 0.0});
+    spring->setAnchor2(Eigen::Vector3d{-1.0, 0.0, 0.0});
+    spring->setFreeLength(2.0);
+    spring->setElasticityCoefficient(9.81*m2->getMass()/0.3);
+    spring->setDampingCoefficient(9.81*m2->getMass()/0.3);
+
+    world.addBody(b1);
+    world.addBody(b2);
+    world.addBody(b3);
+    world.addSpring(spring);
+    world.build();
+
+    solver.home();
 
     MainWindow* w = new MainWindow;
     w->show();
 
     const int ret = app.exec();
-
-    delete solver;
 
     return ret;
 }

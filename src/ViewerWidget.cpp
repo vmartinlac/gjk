@@ -12,11 +12,12 @@
 #include <QMouseEvent>
 
 #include "ViewerWidget.h"
+#include "World.h"
 #include "Solver.h"
 
 ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
 {
-    osg::ref_ptr<osg::Node> data = Solver::instance()->node();
+    osg::ref_ptr<osg::Node> data = World::instance()->getRepresentation();
 
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
 

@@ -17,10 +17,12 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 add_executable(
     gjk
     src/main.cpp
-    src/Collision.cpp
+    src/World.cpp
+    #src/Collision.cpp
     src/Spring.cpp
     src/Solver.cpp
-    src/Body.cpp
+    src/BodyInstance.cpp
+    src/BodyModel.cpp
     src/ViewerWidget.cpp
     src/MainWindow.cpp)
 target_link_libraries(gjk PUBLIC Eigen3::Eigen Qt5::Core Qt5::Widgets ${OPENSCENEGRAPH_LIBRARIES})

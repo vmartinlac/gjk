@@ -1,147 +1,39 @@
 #include <QTime>
-#include <osg/Geode>
-#include <osg/ShapeDrawable>
 #include <iostream>
 #include <memory>
 #include "Solver.h"
-#include "Collision.h"
-
-// declarations of classes in charge of solving ODE.
-
-class Solver::CrankNicholsonMethod
-{
-public:
-    CrankNicholsonMethod(Solver* solver, double theta=0.5);
-    void run(double maxdt, double& dt, bool& completed);
-protected:
-    /*
-    At each timestep, we solve :
-    $$ F( X_{n+1} ) = G( X_n ) $$
-    */
-    void functionF(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
-    void functionG(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y);
-    void inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X);
-    void constructJacobianOfF(const Eigen::VectorXd& X, double delta_t, Eigen::SparseMatrix<double>& jacobian);
-protected:
-    double _theta;
-    Solver* _solver;
-};
-
-class Solver::RK4Method
-{
-public:
-    RK4Method(Solver* solver);
-    void run(double maxdt, double& dt, bool& completed);
-protected:
-    Solver* _solver;
-};
-
-class Solver::ExplicitEulerMethod
-{
-public:
-    ExplicitEulerMethod(Solver* solver);
-    void run(double maxdt, double& dt, bool& completed);
-protected:
-    Solver* _solver;
-};
-
-class Solver::SemiimplicitEulerMethod
-{
-public:
-    SemiimplicitEulerMethod(Solver* solver);
-    void run(double maxdt, double& dt, bool& completed);
-protected:
-    Solver* _solver;
-};
-
-// solver class.
+#include "World.h"
+#include "BodyModel.h"
 
 Solver* Solver::_instance = nullptr;
 
 Solver::Solver()
 {
-    if(_instance != nullptr)
-    {
-        std::abort();
-    }
-
+    if(_instance != nullptr) std::abort();
     _instance = this;
-
-    _node = new osg::Group;
-
-    _numBodies = 0;
-    _dim = 0;
 
     _timestep = 1000 / 60;
 
     _timer = new QTimer(this);
     connect(_timer, SIGNAL(timeout()), this, SLOT(step()));
-
-    _gravity = Eigen::Vector3d{0.0, 0.0, -9.81};
-    _linearViscosity = 5.0e3;
-    _angularViscosity = 1.0e5;
-
-    //////
-    _linearViscosity = 0.0;
-    _angularViscosity = 0.0;
-    //////
-
-    // create axes node.
-
-    {
-        const double r = 0.1;
-        const double l = 5.0;
-
-        osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere( osg::Vec3(0.0, 0.0, 0.0), 2.0*r );
-        osg::ref_ptr<osg::Cylinder> cylx = new osg::Cylinder( osg::Vec3(0.5*l, 0.0, 0.0), r, l);
-        osg::ref_ptr<osg::Cylinder> cyly = new osg::Cylinder( osg::Vec3(0.0, 0.5*l, 0.0), r, l);
-        osg::ref_ptr<osg::Cylinder> cylz = new osg::Cylinder( osg::Vec3(0.0, 0.0, 0.5*l), r, l);
-        cylx->setRotation( osg::Quat(0.0, -M_SQRT2*0.5, 0.0, M_SQRT2*0.5) );
-        cyly->setRotation( osg::Quat(-M_SQRT2*0.5, 0.0, 0.0, M_SQRT2*0.5) );
-
-        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-        geode->addDrawable( new osg::ShapeDrawable( sphere )); 
-        geode->addDrawable( new osg::ShapeDrawable( cylx )); 
-        geode->addDrawable( new osg::ShapeDrawable( cyly )); 
-        geode->addDrawable( new osg::ShapeDrawable( cylz )); 
-
-        _node->addChild(geode);
-    }
 }
 
 Solver::~Solver()
 {
-    if(_instance == nullptr)
-    {
-        std::abort();
-    }
-
+    if(_instance == nullptr) std::abort();
     _instance = nullptr;
-}
-
-void Solver::addBody(BodyPtr body)
-{
-    _bodies.push_back( body );
-    _node->addChild( body->getRepresentation() );
-
-    body->setId(_numBodies);
-    _numBodies++;
-    _dim = _numBodies*13;
-}
-
-void Solver::addSpring( SpringPtr spring )
-{
-    _springs.push_back( spring );
-    _node->addChild( spring->getRepresentation() );
 }
 
 void Solver::home()
 {
-    for(BodyPtr& b : _bodies)
+    World* w = World::instance();
+
+    for( std::shared_ptr<BodyInstance>& b : w->getBodies() )
     {
         b->currentState() = b->initialState();
     }
-    syncRepresentation();
+
+    w->syncRepresentation();
 }
 
 void Solver::startSimulation()
@@ -154,27 +46,6 @@ void Solver::stopSimulation()
     _timer->stop();
 }
 
-void Solver::clear()
-{
-    _bodies.clear();
-    _springs.clear();
-    _numBodies = 0;
-    _dim = 0;
-}
-
-void Solver::syncRepresentation()
-{
-   for(BodyPtr& b : _bodies)
-   {
-      b->syncRepresentation();
-   }
-
-   for(SpringPtr& s : _springs)
-   {
-      s->syncRepresentation();
-   }
-}
-
 void Solver::step()
 {
     bool go_on = true;
@@ -185,12 +56,7 @@ void Solver::step()
     {
         bool completed;
         double dt;
-
-        //CrankNicholsonMethod method(this);
-        //RK4Method method(this);
-        ExplicitEulerMethod method(this);
-
-        method.run(time_left, dt, completed);
+        semiimplicitEulerMethod(time_left, dt, completed);
 
         go_on = !completed;
         time_left -= dt;
@@ -229,81 +95,90 @@ void Solver::step()
 
     std::cout << "num_iterations = " << num_iterations << std::endl;
 
-    syncRepresentation();
+    World::instance()->syncRepresentation();
 }
 
 void Solver::retrieveCurrentState(Eigen::VectorXd& X)
 {
-    X.resize( _dim );
+    World* w = World::instance();
 
-    for(int i=0; i<_numBodies; i++)
+    X.resize( 13 * w->numBodies() );
+
+    for( std::shared_ptr<BodyInstance>& body : w->getBodies() )
     {
-        Body::State& s = _bodies[i]->currentState();
+        BodyState& s = body->currentState();
+        const int id = body->getId();
 
-        X.segment<3>(13*i+0) = s.position;
-        X.segment<4>(13*i+3) = s.attitude.coeffs();
-        X.segment<3>(13*i+7) = s.linear_momentum;
-        X.segment<3>(13*i+10) = s.angular_momentum;
+        X.segment<3>(13*id+0) = s.position;
+        X.segment<4>(13*id+3) = s.attitude.coeffs();
+        X.segment<3>(13*id+7) = s.linear_momentum;
+        X.segment<3>(13*id+10) = s.angular_momentum;
     }
 }
 
 void Solver::normalizeState(Eigen::VectorXd& X)
 {
-    assert( X.size() == _dim );
+    World* w = World::instance();
 
-    for(int i=0; i<_numBodies; i++)
+    assert( X.size() == 13 * w->numBodies() );
+
+    for( std::shared_ptr<BodyInstance>& body : w->getBodies() )
     {
+        const int id = body->getId();
         // we could just do X.segment<4>(13*i+3).normalize().
         Eigen::Quaterniond u;
-        u.coeffs() = X.segment<4>(13*i+3);
+        u.coeffs() = X.segment<4>(13*id+3);
         u.normalize();
-        X.segment<4>(13*i+3) = u.coeffs();
+        X.segment<4>(13*id+3) = u.coeffs();
     }
 }
 
 void Solver::applyState(const Eigen::VectorXd& X)
 {
-    assert( X.size() == _dim );
+    World* w = World::instance();
 
-    for(int i=0; i<_numBodies; i++)
+    assert( X.size() == 13*w->numBodies() );
+
+    for( std::shared_ptr<BodyInstance>& body : w->getBodies() )
     {
-        BodyPtr body = _bodies[i];
         if(body->isMoving())
         {
-            body->currentState() = extractIndividualState(X, i);
+            body->currentState() = extractIndividualState(X, body->getId());
         }
     }
 }
 
 void Solver::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f)
 {
-    assert( X.size() == _dim );
+    World* w = World::instance();
 
-    f.resize(_dim);
+    const int dim = 13*w->numBodies();
 
-    for(int i=0; i<_numBodies; i++)
+    assert( X.size() == dim );
+
+    f.resize(dim);
+
+    for( std::shared_ptr<BodyInstance>& body : w->getBodies() )
     {
-        BodyPtr body = _bodies[i];
+        const int id = body->getId();
 
         if(body->isFixed())
         {
-            f.segment<13>(13*i).setZero();
+            f.segment<13>(13*id).setZero();
         }
         else
         {
-            Body::State state = extractIndividualState(X, i);
+            BodyState state = extractIndividualState(X, id);
 
-            const Eigen::Vector3d linear_velocity = state.linear_momentum / body->getMass();
-            const Eigen::Vector3d angular_velocity = state.attitude * body->getInertiaTensorSolver().solve( state.attitude.inverse() * state.angular_momentum );
+            const Eigen::Vector3d linear_velocity = body->getLinearVelocityWF(state);
+            const Eigen::Vector3d angular_velocity = body->getAngularVelocityWF(state);
 
             Eigen::Vector3d resultant_force = Eigen::Vector3d::Zero();
             Eigen::Vector3d resultant_torque = Eigen::Vector3d::Zero();
 
-            resultant_force += body->getMass() * _gravity;
-            resultant_force -= _linearViscosity * linear_velocity;
-            resultant_torque -= _angularViscosity * angular_velocity;
-
-            const int id = body->getId();
+            resultant_force += body->getModel()->getMass() * w->getGravity();
+            resultant_force -= w->getLinearViscosity() * linear_velocity;
+            resultant_torque -= w->getAngularViscosity() * angular_velocity;
 
             f.segment<3>(13*id+0) = linear_velocity;
             f.segment<4>(13*id+3) = 0.5 * ( Eigen::Quaterniond(0.0, angular_velocity.x(), angular_velocity.y(), angular_velocity.z()) * state.attitude ).coeffs();
@@ -312,41 +187,47 @@ void Solver::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f
         }
     }
 
-    for(SpringPtr spring : _springs)
+    for( std::shared_ptr<Spring>& spring : w->getSprings() )
     {
-        Body* B1 = spring->getBody1();
-        Body* B2 = spring->getBody2();
+        std::shared_ptr<BodyInstance> B1 = spring->getBody1();
+        std::shared_ptr<BodyInstance> B2 = spring->getBody2();
 
         const int id1 = B1->getId();
         const int id2 = B2->getId();
 
-        Body::State S1 = extractIndividualState(X, id1);
-        Body::State S2 = extractIndividualState(X, id2);
+        BodyState S1 = extractIndividualState(X, id1);
+        BodyState S2 = extractIndividualState(X, id2);
 
         const Eigen::Vector3d P1 = S1.position + S1.attitude * spring->getAnchor1();
         const Eigen::Vector3d P2 = S2.position + S2.attitude * spring->getAnchor2();
 
+        const Eigen::Vector3d V1 = B1->getLinearVelocityWF(S1) + B1->getAngularVelocityWF(S1).cross( S1.attitude*spring->getAnchor1() );
+        const Eigen::Vector3d V2 = B2->getLinearVelocityWF(S2) + B2->getAngularVelocityWF(S2).cross( S2.attitude*spring->getAnchor2() );
+
         const double L = (P2 - P1).norm();
-        const double cte = spring->getElasticityCoefficient() * (L - spring->getFreeLength()) / spring->getFreeLength();
-        const Eigen::Vector3d F = (P2-P1).normalized() * cte;
+        const Eigen::Vector3d u = (P2 - P1)/L;
+        const double magnitude =
+            spring->getElasticityCoefficient() * (L - spring->getFreeLength()) / spring->getFreeLength()
+            + spring->getDampingCoefficient() * ( (V2 - V1).dot(u) );
+        const Eigen::Vector3d F = -u * magnitude;
 
         if(B1->isMoving())
         {
-            f.segment<3>(13*id1+7) += F;
-            f.segment<3>(13*id1+10) += (B1->currentState().attitude * spring->getAnchor1()).cross( F );
+            f.segment<3>(13*id1+7) -= F;
+            f.segment<3>(13*id1+10) -= (B1->currentState().attitude * spring->getAnchor1()).cross( F );
         }
 
         if(B2->isMoving())
         {
-            f.segment<3>(13*id2+7) -= F;
-            f.segment<3>(13*id2+10) -= (B2->currentState().attitude * spring->getAnchor2()).cross( F );
+            f.segment<3>(13*id2+7) += F;
+            f.segment<3>(13*id2+10) += (B2->currentState().attitude * spring->getAnchor2()).cross( F );
         }
     }
 }
 
-Body::State Solver::extractIndividualState(const Eigen::VectorXd& X, int id)
+BodyState Solver::extractIndividualState(const Eigen::VectorXd& X, int id)
 {
-    Body::State s;
+    BodyState s;
 
     s.position = X.segment<3>(13*id+0);
     s.attitude.coeffs() = X.segment<4>(13*id+3);
@@ -362,15 +243,16 @@ void Solver::computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt,
     completed = true;
     dt = maxdt;
 
-    for(int i=0; i<_numBodies; i++)
+    for( std::shared_ptr<BodyInstance>& body : World::instance()->getBodies() )
     {
-        BodyPtr body = _bodies[i];
-        Body::State state = extractIndividualState(X, i);
+        const int id = body->getId();
 
-        const Eigen::Vector3d linear_velocity = state.linear_momentum / body->getMass();
-        const Eigen::Vector3d angular_velocity = body->getInertiaTensorSolver().solve( state.angular_momentum );
+        BodyState state = extractIndividualState(X, id);
 
-        const double bs_radius = body->getBoundingSphere().radius;
+        const Eigen::Vector3d linear_velocity = body->getLinearVelocityWF(state);
+        const Eigen::Vector3d angular_velocity = body->getAngularVelocityWF(state);
+
+        const double bs_radius = body->getModel()->getBoundingSphereRadius();
         const double max_dist = bs_radius * 0.01;
         const double dt1 = max_dist / linear_velocity.norm();
         const double dt2 = max_dist / std::max(1.0e-5, angular_velocity.norm()*bs_radius);
@@ -384,137 +266,10 @@ void Solver::computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt,
     }
 }
 
-// Crank-Nicholson method for solving the ODE.
-
-Solver::CrankNicholsonMethod::CrankNicholsonMethod(Solver* solver, double theta)
+void Solver::explicitEulerMethod(double maxdt, double& dt, bool& completed)
 {
-    _theta = theta;
-    _solver = solver;
-}
-
-void Solver::CrankNicholsonMethod::run(double maxdt, double& dt, bool& completed)
-{
-    Eigen::VectorXd Xpre;
-    _solver->retrieveCurrentState(Xpre);
-
-    _solver->computeTimestep(Xpre, maxdt, dt, completed);
-
-    Eigen::VectorXd G;
-    functionG(Xpre, dt, G);
-
-    Eigen::VectorXd Xpost;
-    inverseF(G, Xpre, dt, Xpost);
-
-    _solver->applyState(Xpost);
-}
-
-void Solver::CrankNicholsonMethod::functionF(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y)
-{
-    Eigen::VectorXd f;
-    _solver->computeStateDerivative(X, f);
-
-    Y = (1.0/delta_t)*X - (1.0-_theta)*f;
-}
-
-void Solver::CrankNicholsonMethod::functionG(const Eigen::VectorXd& X, double delta_t, Eigen::VectorXd& Y)
-{
-    Eigen::VectorXd f;
-    _solver->computeStateDerivative(X, f);
-
-    Y = (1.0/delta_t)*X + _theta*f;
-}
-
-void Solver::CrankNicholsonMethod::inverseF(const Eigen::VectorXd& Y, const Eigen::VectorXd& X0, double delta_t, Eigen::VectorXd& X)
-{
-    X = X0;
-
-    int max_iterations = 300;
-    bool go_on = true;
-    while(go_on && max_iterations > 0)
-    {
-        Eigen::VectorXd F;
-        functionF(X, delta_t, F);
-
-        Eigen::SparseMatrix<double> jacobian;
-        constructJacobianOfF(X, delta_t, jacobian);
-
-        Eigen::ConjugateGradient< Eigen::SparseMatrix<double> > solver;
-        solver.compute(jacobian);
-
-        Eigen::VectorXd DX = solver.solve(Y-F);
-        X += DX;
-        _solver->normalizeState(X);
-
-        go_on = (DX.lpNorm<1>() > 1.0e-2);
-        max_iterations--;
-    }
-}
-
-void Solver::CrankNicholsonMethod::constructJacobianOfF(const Eigen::VectorXd& X, double delta_t, Eigen::SparseMatrix<double>& jacobian)
-{
-    // TODO !
     throw;
-
-    const int d = _solver->_dim;
-
-    Eigen::VectorXi reservation(d);
-
-    for(int i=0; i<_solver->_numBodies; i++)
-    {
-        reservation.segment<3>(13*i+0) = Eigen::VectorXi::Constant(3, 2);
-        reservation.segment<4>(13*i+3) = Eigen::VectorXi::Constant(4, 3);
-        reservation.segment<6>(13*i+7) = Eigen::VectorXi::Constant(6, 2);
-    }
-
-    for(SpringPtr spring : _solver->_springs)
-    {
-        const int id1 = spring->getBody1()->getId();
-        const int id2 = spring->getBody2()->getId();
-
-        reservation.segment<6>(13*id1+7) += Eigen::VectorXi::Constant(6, 1);
-        reservation.segment<6>(13*id2+7) += Eigen::VectorXi::Constant(6, 1);
-    }
-
-    jacobian.resize(d, d);
-    jacobian.setZero();
-    jacobian.reserve(reservation);
-
-    for(int i=0; i<d; i++)
-    {
-        jacobian.coeffRef(i, i) += 1.0/delta_t;
-    }
-
-    const double cte = -(1.0-_theta);
-
-    for(int i=0; i<_solver->_numBodies; i++)
-    {
-        BodyPtr body = _solver->_bodies[i];
-        Body::State state = _solver->extractIndividualState(X, i);
-
-        jacobian.coeffRef(13*i+0, 13*i+7) = 1.0 / body->getMass();
-        jacobian.coeffRef(13*i+1, 13*i+8) = 1.0 / body->getMass();
-        jacobian.coeffRef(13*i+2, 13*i+9) = 1.0 / body->getMass();
-
-        jacobian.coeffRef(13*i+7, 13*i+7) = -_solver->_linearViscosity / body->getMass();
-        jacobian.coeffRef(13*i+8, 13*i+8) = -_solver->_linearViscosity / body->getMass();
-        jacobian.coeffRef(13*i+9, 13*i+9) = -_solver->_linearViscosity / body->getMass();
-    }
-
-    for(SpringPtr spring : _solver->_springs)
-    {
-        ;
-    }
-}
-
-// Explicit Euler method.
-
-Solver::ExplicitEulerMethod::ExplicitEulerMethod(Solver* solver)
-{
-    _solver = solver;
-}
-
-void Solver::ExplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
-{
+    /*
     completed = true;
     dt = maxdt;
 
@@ -530,17 +285,13 @@ void Solver::ExplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
 
     _solver->normalizeState(X);
     _solver->applyState(X);
+    */
 }
 
-// Runge Kutta 4 method.
-
-Solver::RK4Method::RK4Method(Solver* solver)
+void Solver::RK4Method(double maxdt, double& dt, bool& completed)
 {
-    _solver = solver;
-}
-
-void Solver::RK4Method::run(double maxdt, double& dt, bool& completed)
-{
+    throw;
+/*
     completed = true;
     dt = maxdt;
 
@@ -571,37 +322,38 @@ void Solver::RK4Method::run(double maxdt, double& dt, bool& completed)
     X += dt*f;
     _solver->normalizeState(X);
     _solver->applyState(X);
+*/
 }
 
-// Semiimplicit Euler method.
-
-Solver::SemiimplicitEulerMethod::SemiimplicitEulerMethod(Solver* solver)
+void Solver::semiimplicitEulerMethod(double maxdt, double& dt, bool& completed)
 {
-    _solver = solver;
-}
+    const int num_bodies = World::instance()->numBodies();
 
-void Solver::SemiimplicitEulerMethod::run(double maxdt, double& dt, bool& completed)
-{
-    // TODO !
-    throw;
-    /*
     completed = true;
     dt = maxdt;
 
     Eigen::VectorXd X;
-    _solver->retrieveCurrentState(X);
+    retrieveCurrentState(X);
 
-    _solver->computeTimestep(X, maxdt, dt, completed);
+    computeTimestep(X, maxdt, dt, completed);
 
-    Eigen::VectorXd f;
-    _solver->computeStateDerivative(X, f);
+    Eigen::VectorXd f1;
+    computeStateDerivative(X, f1);
 
-    X += dt*f;
-    _solver->normalizeState(X);
+    for(int i=0; i<num_bodies; i++)
+    {
+        X.segment<7>(13*i+0) += dt*f1.segment<7>(13*i+0);
+    }
 
-    Eigen::VectorXd f;
-    _solver->computeStateDerivative(X, f);
+    normalizeState(X);
 
-    _solver->applyState(X);
-    */
+    Eigen::VectorXd f2;
+    computeStateDerivative(X, f2);
+
+    for(int i=0; i<num_bodies; i++)
+    {
+        X.segment<6>(13*i+7) += dt*f2.segment<6>(13*i+7);
+    }
+
+    applyState(X);
 }
