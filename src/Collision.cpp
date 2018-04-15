@@ -13,7 +13,11 @@ bool Collision::detect(
         std::cerr << "Warning ! Collision detection algorithm body1 == body2 !" << std::endl;
     }
 
-    if( b1->getModel()->isBox() && b2->getModel()->isSphere() )
+    if( (b2->collisionState().position - b1->collisionState().position).norm() > b1->getModel()->getBoundingSphereRadius() + b2->getModel()->getBoundingSphereRadius() )
+    {
+        return false;
+    }
+    else if( b1->getModel()->isBox() && b2->getModel()->isSphere() )
     {
         return detectSphereBox(b2, b1, collision_point);
     }

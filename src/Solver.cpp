@@ -253,7 +253,7 @@ void Solver::computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt,
         const Eigen::Vector3d angular_velocity = body->getAngularVelocityWF(state);
 
         const double bs_radius = body->getModel()->getBoundingSphereRadius();
-        const double max_dist = bs_radius * 0.01;
+        const double max_dist = bs_radius * 0.05;
         const double dt1 = max_dist / linear_velocity.norm();
         const double dt2 = max_dist / std::max(1.0e-5, angular_velocity.norm()*bs_radius);
         const double dt3 = std::min(dt1, dt2);
