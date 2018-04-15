@@ -35,11 +35,11 @@ protected:
     BodyState extractIndividualState(const Eigen::VectorXd& X, int id);
     void computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt, bool& completed);
 
-protected:
-
     void explicitEulerMethod(double maxdt, double& dt, bool& completed);
     void semiimplicitEulerMethod(double maxdt, double& dt, bool& completed);
     void RK4Method(double maxdt, double& dt, bool& completed);
+
+    void detectAndSolveCollisions();
 
 protected:
 

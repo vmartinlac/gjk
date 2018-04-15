@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt5 COMPONENTS Core Widgets Gui  OpenGL REQUIRED)
 find_package(OpenSceneGraph COMPONENTS osg osgGA osgViewer osgDB REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(Boost 1.60.0 REQUIRED)# COMPONENTS math_tr1 random program_options)
 
 add_executable(
     gjk
@@ -25,5 +26,6 @@ add_executable(
     src/BodyModel.cpp
     src/ViewerWidget.cpp
     src/MainWindow.cpp)
-target_link_libraries(gjk PUBLIC Eigen3::Eigen Qt5::Core Qt5::Widgets ${OPENSCENEGRAPH_LIBRARIES})
+
+target_link_libraries(gjk PUBLIC Boost::boost Eigen3::Eigen Qt5::Core Qt5::Widgets ${OPENSCENEGRAPH_LIBRARIES})
 target_include_directories(gjk PUBLIC ${OPENSCENEGRAPH_INCLUDE_DIRS})

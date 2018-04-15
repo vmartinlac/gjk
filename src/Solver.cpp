@@ -1,4 +1,6 @@
 #include <QTime>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 #include <iostream>
 #include <memory>
 #include "Solver.h"
@@ -49,8 +51,6 @@ void Solver::stopSimulation()
 
 void Solver::step()
 {
-    World* w = World::instance();
-
     bool go_on = true;
     double time_left = double(_timestep) * 1.0e-3;
     int num_iterations = 0;
@@ -64,31 +64,7 @@ void Solver::step()
         go_on = !completed;
         time_left -= dt;
 
-        // detect collisions.
-
-        for(int i=0; i<w->numBodies(); i++)
-        {
-            std::shared_ptr<BodyInstance>& b1 = w->getBodies()[i];
-            b1->collisionState() = b1->currentState();
-            if( b1->isMoving() )
-            {
-                bool collision = false;
-
-                for(int j=0; collision == false && j<w->numBodies(); j++)
-                {
-                    if(j != i)
-                    {
-                        std::shared_ptr<BodyInstance>& b2 = w->getBodies()[j];
-
-                        Eigen::Vector3d collision_point;
-
-                        collision = Collision::detect( b1, b2, collision_point );
-                    }
-                }
-
-                if(collision) b1->setFixed();
-            }
-        }
+        detectAndSolveCollisions();
 
         num_iterations++;
     }
@@ -96,6 +72,64 @@ void Solver::step()
     std::cout << "num_iterations = " << num_iterations << std::endl;
 
     World::instance()->syncRepresentation();
+}
+
+void Solver::detectAndSolveCollisions()
+{
+    struct Impact
+    {
+        Eigen::Vector3d point;
+        int bodies[2];
+    };
+
+    struct Cluster
+    {
+        std::set<int> bodies;
+        int first_impact;
+        int num_impacts;
+    };
+
+    World* w = World::instance();
+
+    const int num_bodies = w->numBodies();
+    World::BodyList& bodies = w->getBodies();
+
+    std::vector<Impact> impacts;
+
+    std::vector<int> partition( num_bodies );
+    std::vector<int> ranks( num_bodies );
+    boost::disjoint_sets<int*, int*> unionfind(&ranks.front(), &partition.front());
+
+    for(int i=0; i<num_bodies; i++) unionfind.make_set(i);
+
+    for( int id1=0; id1<num_bodies; id1++)
+    {
+        for( int id2=id1+1; id2<num_bodies; id2++)
+        {
+            Eigen::Vector3d point;
+            if( Collision::detect( bodies[id1], bodies[id2], point ) )
+            {
+                unionfind.union_set(id1, id2);
+
+                Impact imp;
+                imp.bodies[0] = id1;
+                imp.bodies[1] = id2;
+                imp.point = point;
+
+                impacts.push_back(imp);
+            }
+        }
+    }
+
+    unionfind.compress_sets(
+        boost::counting_iterator<int>(0),
+        boost::counting_iterator<int>(num_bodies));
+
+    const int num_clusters = unionfind.count_sets(
+        boost::counting_iterator<int>(0),
+        boost::counting_iterator<int>(num_bodies));
+
+    std::cout << num_clusters << std::endl;
 }
 
 void Solver::retrieveCurrentState(Eigen::VectorXd& X)
@@ -143,7 +177,7 @@ void Solver::applyState(const Eigen::VectorXd& X)
     {
         if(body->isMoving())
         {
-            body->currentState() = extractIndividualState(X, body->getId());
+            body->collisionState() = extractIndividualState(X, body->getId());
         }
     }
 }
