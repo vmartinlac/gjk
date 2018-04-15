@@ -4,6 +4,7 @@
 #include "Solver.h"
 #include "World.h"
 #include "BodyModel.h"
+#include "Collision.h"
 
 Solver* Solver::_instance = nullptr;
 
@@ -48,6 +49,8 @@ void Solver::stopSimulation()
 
 void Solver::step()
 {
+    World* w = World::instance();
+
     bool go_on = true;
     double time_left = double(_timestep) * 1.0e-3;
     int num_iterations = 0;
@@ -63,32 +66,29 @@ void Solver::step()
 
         // detect collisions.
 
-        /*
-        for(int i=0; i<_bodies.size(); i++)
+        for(int i=0; i<w->numBodies(); i++)
         {
-            BodyPtr b1 = _bodies[i];
-            b1->representationState() = b1->collisionDetectionState();
+            std::shared_ptr<BodyInstance>& b1 = w->getBodies()[i];
+            b1->collisionState() = b1->currentState();
             if( b1->isMoving() )
             {
                 bool collision = false;
 
-                for(int j=0; collision == false && j<_bodies.size(); j++)
+                for(int j=0; collision == false && j<w->numBodies(); j++)
                 {
                     if(j != i)
                     {
-                        BodyPtr b2 = _bodies[j];
+                        std::shared_ptr<BodyInstance>& b2 = w->getBodies()[j];
 
                         Eigen::Vector3d collision_point;
 
-                        collision = Collision::detect(
-                            b1.get(),
-                            b2.get(),
-                            collision_point);
+                        collision = Collision::detect( b1, b2, collision_point );
                     }
                 }
+
+                if(collision) b1->setFixed();
             }
         }
-        */
 
         num_iterations++;
     }

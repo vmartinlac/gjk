@@ -12,15 +12,8 @@ namespace gjk {
     template<int Dim>
     using SimplexPoints = Eigen::Matrix<double, Dim, Dim+1, Eigen::ColMajor>;
 
-    template<int Dim>
-    class ConvexBody
-    {
-    public:
-        virtual Vector<Dim> support(const Vector<Dim>& direction) = 0;
-    };
-
-    template<int Dim>
-    inline bool areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2);
+    template<int Dim, typename PObject>
+    bool areIntersecting(PObject o1, PObject o2, Vector<Dim>& intersection_point);
 
     // Find the point of the simplex which is closest to the origin.
     //
@@ -108,8 +101,8 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
     }
 }
 
-template<int Dim>
-bool gjk::areIntersecting(ConvexBody<Dim>* o1, ConvexBody<Dim>* o2)
+template<int Dim, typename PObject>
+bool gjk::areIntersecting(PObject o1, PObject o2, Vector<Dim>& intersection_point)
 {
     auto support = [o1, o2] (const Vector<Dim>& dir) -> Vector<Dim>
     {

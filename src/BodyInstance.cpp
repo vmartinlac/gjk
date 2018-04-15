@@ -50,3 +50,8 @@ Eigen::Vector3d BodyInstance::getAngularVelocityBF(const BodyState& state)
     return _model->getInertiaTensorSolver().solve( state.attitude.inverse() * state.angular_momentum );
 }
 
+Eigen::Vector3d BodyInstance::support(const Eigen::Vector3d& direction)
+{
+    BodyState& s = collisionState();
+    return s.position + s.attitude* getModel()->support( s.attitude.inverse() * direction );
+}

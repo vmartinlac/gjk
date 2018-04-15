@@ -36,6 +36,8 @@ public:
     void setFixed() { _moving = false; }
     bool isFixed() { return !_moving; }
 
+    Eigen::Vector3d support(const Eigen::Vector3d& direction);
+
 protected:
 
     int _id;

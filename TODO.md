@@ -1,6 +1,6 @@
 * gérer collisions :
     * calculer point de contact lors de collision.
-    * améliorer implantation GJK.
+    * améliorer critère d'arrêt GJK.
     * décider ordre traitement des collisions et/ou collisions multiples.
     
 * fonctionnalité UI :
@@ -10,5 +10,3 @@
 
 * mettre en place multithreading (1 thread UI et 1 thread physics).
 
-* visualisation :
-    * use only one vertex array for all springs.

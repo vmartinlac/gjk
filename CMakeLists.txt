@@ -18,7 +18,7 @@ add_executable(
     gjk
     src/main.cpp
     src/World.cpp
-    #src/Collision.cpp
+    src/Collision.cpp
     src/Spring.cpp
     src/Solver.cpp
     src/BodyInstance.cpp

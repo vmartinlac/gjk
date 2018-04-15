@@ -147,11 +147,15 @@ int main(int num_args, char** args)
     std::shared_ptr<BodyModel> m2(new SphereBody(1.0, CTE_WOOD_DENSITY));
     m2->asSphere()->setColor(0.7, 0.1, 0.1);
     std::shared_ptr<BodyInstance> b2(new BodyInstance(m2));
-    std::shared_ptr<BodyInstance> b3(new BodyInstance(m2));
     b2->initialState().position << -2.0, 0.0, 10.0;
     b2->setMoving();
 
+    std::shared_ptr<BodyInstance> b3(new BodyInstance(m2));
     b3->initialState().position << 2.0, 0.0, 10.0;
+
+    std::shared_ptr<BodyInstance> b4(new BodyInstance(m2));
+    b4->initialState().position << -10.0, 0.0, 10.0;
+    b4->setMoving();
 
     std::shared_ptr<Spring> spring(new Spring);
     spring->setBody1(b2);
@@ -165,6 +169,7 @@ int main(int num_args, char** args)
     world.addBody(b1);
     world.addBody(b2);
     world.addBody(b3);
+    world.addBody(b4);
     world.addSpring(spring);
     world.build();
 

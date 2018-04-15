@@ -68,7 +68,7 @@ void World::build()
             osg::Vec3d(0.0, 0.0, 0.0));
 
         osg::Vec3dArray* color_array = new osg::Vec3dArray;
-        color_array->push_back( osg::Vec3d(2.0, 0.8, 2.0) );
+        color_array->push_back( osg::Vec3d(0.2, 0.8, 0.2) );
 
         osg::Geometry* geom = new osg::Geometry;
         geom->setVertexArray(_springEndPoints);
