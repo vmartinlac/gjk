@@ -125,9 +125,17 @@ void Solver::detectAndSolveCollisions()
         boost::counting_iterator<int>(0),
         boost::counting_iterator<int>(num_bodies));
 
-    const int num_clusters = unionfind.count_sets(
-        boost::counting_iterator<int>(0),
-        boost::counting_iterator<int>(num_bodies));
+    int num_clusters = 0;
+    std::vector<int> cluster_index(num_bodies, -1);
+    for(int i=0; i<num_bodies; i++)
+    {
+        const int repr = unionfind.find_set(i);
+        if( cluster_index[repr] < 0 )
+        {
+            cluster_index[repr] = num_clusters;
+            num_clusters++;
+        }
+    }
 
     std::cout << num_clusters << std::endl;
 }
