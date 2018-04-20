@@ -7,6 +7,7 @@
 #include "World.h"
 #include "BodyModel.h"
 #include "Collision.h"
+#include "Cluster.h"
 
 Solver* Solver::_instance = nullptr;
 
@@ -76,25 +77,12 @@ void Solver::step()
 
 void Solver::detectAndSolveCollisions()
 {
-    struct Impact
-    {
-        Eigen::Vector3d point;
-        int bodies[2];
-    };
-
-    struct Cluster
-    {
-        std::set<int> bodies;
-        int first_impact;
-        int num_impacts;
-    };
-
     World* w = World::instance();
 
     const int num_bodies = w->numBodies();
     World::BodyList& bodies = w->getBodies();
 
-    std::vector<Impact> impacts;
+    std::vector<Collision> collisions;
 
     std::vector<int> partition( num_bodies );
     std::vector<int> ranks( num_bodies );
@@ -106,17 +94,13 @@ void Solver::detectAndSolveCollisions()
     {
         for( int id2=id1+1; id2<num_bodies; id2++)
         {
-            Eigen::Vector3d point;
-            if( Collision::detect( bodies[id1], bodies[id2], point ) )
+            Collision col;
+            col.compute( bodies[id1], bodies[id2] );
+
+            if(col.exists())
             {
                 unionfind.union_set(id1, id2);
-
-                Impact imp;
-                imp.bodies[0] = id1;
-                imp.bodies[1] = id2;
-                imp.point = point;
-
-                impacts.push_back(imp);
+                collisions.push_back(col);
             }
         }
     }
@@ -127,6 +111,7 @@ void Solver::detectAndSolveCollisions()
 
     int num_clusters = 0;
     std::vector<int> cluster_index(num_bodies, -1);
+
     for(int i=0; i<num_bodies; i++)
     {
         const int repr = unionfind.find_set(i);
@@ -137,7 +122,26 @@ void Solver::detectAndSolveCollisions()
         }
     }
 
-    std::cout << num_clusters << std::endl;
+    std::vector<Cluster> clusters(num_clusters);
+
+    for(Collision& c : collisions)
+    {
+        const int cluster1 = cluster_index[ unionfind.find_set( c.getBody1()->getId() ) ];
+        const int cluster2 = cluster_index[ unionfind.find_set( c.getBody2()->getId() ) ];
+        if(cluster1 != cluster2) throw std::logic_error("Logic error");
+        clusters[cluster1].collisions.push_back(c);
+    }
+
+    for(std::shared_ptr<BodyInstance>& body : bodies)
+    {
+        const int cluster = cluster_index[ unionfind.find_set( body->getId() ) ];
+        clusters[cluster].bodies.push_back(body);
+    }
+
+    for(Cluster& c : clusters)
+    {
+        c.process();
+    }
 }
 
 void Solver::retrieveCurrentState(Eigen::VectorXd& X)
@@ -186,6 +190,10 @@ void Solver::applyState(const Eigen::VectorXd& X)
         if(body->isMoving())
         {
             body->collisionState() = extractIndividualState(X, body->getId());
+        }
+        else
+        {
+            body->collisionState() = body->currentState();
         }
     }
 }

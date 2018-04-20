@@ -21,7 +21,7 @@ public:
 
     BodyState& initialState() { return _initialState; }
     BodyState& currentState() { return _currentState; }
-    BodyState& collisionState() { return _currentState; }
+    BodyState& collisionState() { return _collisionState; }
 
     int getId() { return _id; }
     void setId(int id) { _id = id; }

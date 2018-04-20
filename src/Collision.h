@@ -3,30 +3,33 @@
 #include <memory>
 #include "BodyInstance.h"
 
-namespace Collision
+class Collision
 {
-    bool detect(
-        std::shared_ptr<BodyInstance> b1,
-        std::shared_ptr<BodyInstance> b2,
-        Eigen::Vector3d& collision_point);
+public:
 
-    bool detectBoxBox(
+    bool compute(
         std::shared_ptr<BodyInstance> b1,
-        std::shared_ptr<BodyInstance> b2,
-        Eigen::Vector3d& collision_point);
+        std::shared_ptr<BodyInstance> b2);
 
-    bool detectSphereSphere(
-        std::shared_ptr<BodyInstance> b1,
-        std::shared_ptr<BodyInstance> b2,
-        Eigen::Vector3d& collision_point);
+    bool exists() { return _exists; }
+    std::shared_ptr<BodyInstance> getBody1() { return _body1; }
+    std::shared_ptr<BodyInstance> getBody2() { return _body2; }
+    const Eigen::Vector3d& getCollisionPoint() { return _point; }
+    const Eigen::Matrix3d& getCollisionFrame() { return _frame; }
 
-    bool detectSphereBox(
-        std::shared_ptr<BodyInstance> b1,
-        std::shared_ptr<BodyInstance> b2,
-        Eigen::Vector3d& collision_point);
+protected:
 
-    bool detectGJK(
-        std::shared_ptr<BodyInstance> b1,
-        std::shared_ptr<BodyInstance> b2,
-        Eigen::Vector3d& collision_point);
+    void computeBoxBox();
+    void computeSphereSphere();
+    void computeSphereBox();
+    void computeGJK();
+
+protected:
+
+    bool _exists;
+    Eigen::Vector3d _point;
+    Eigen::Matrix3d _frame;
+    std::shared_ptr<BodyInstance> _body1;
+    std::shared_ptr<BodyInstance> _body2;
 };
+

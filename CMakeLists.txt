@@ -24,6 +24,7 @@ add_executable(
     src/Solver.cpp
     src/BodyInstance.cpp
     src/BodyModel.cpp
+    src/Cluster.cpp
     src/ViewerWidget.cpp
     src/MainWindow.cpp)
 

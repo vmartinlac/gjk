@@ -3,55 +3,57 @@
 #include "GJK.h"
 #include "BodyModel.h"
 
-bool Collision::detect(
+bool Collision::compute(
     std::shared_ptr<BodyInstance> b1,
-    std::shared_ptr<BodyInstance> b2,
-    Eigen::Vector3d& collision_point)
+    std::shared_ptr<BodyInstance> b2)
 {
+    _body1 = b1;
+    _body2 = b2;
+
     if( b1.get() == b2.get() )
     {
         std::cerr << "Warning ! Collision detection algorithm body1 == body2 !" << std::endl;
     }
 
-    if( (b2->collisionState().position - b1->collisionState().position).norm() > b1->getModel()->getBoundingSphereRadius() + b2->getModel()->getBoundingSphereRadius() )
+    const double distance_centres = (b2->collisionState().position - b1->collisionState().position).norm();
+    const double threshold = b1->getModel()->getBoundingSphereRadius() + b2->getModel()->getBoundingSphereRadius();
+
+    if( distance_centres > threshold )
     {
-        return false;
+        _exists = false;
+    }
+    else if( b1->getModel()->isSphere() && b2->getModel()->isBox() )
+    {
+        computeSphereBox();
     }
     else if( b1->getModel()->isBox() && b2->getModel()->isSphere() )
     {
-        return detectSphereBox(b2, b1, collision_point);
-    }
-    else if( b2->getModel()->isBox() && b1->getModel()->isSphere() )
-    {
-        return detectSphereBox(b1, b2, collision_point);
+        computeSphereBox();
     }
     else if( b1->getModel()->isBox() && b2->getModel()->isBox() )
     {
-        return detectBoxBox(b1, b2, collision_point);
+        computeBoxBox();
     }
     else if( b1->getModel()->isSphere() && b2->getModel()->isSphere() )
     {
-        return detectSphereSphere(b1, b2, collision_point);
+        computeSphereSphere();
     }
     else
     {
-        return detectGJK(b1, b2, collision_point);
+        computeGJK();
     }
+
+    return _exists;
 }
 
-bool Collision::detectGJK( std::shared_ptr<BodyInstance> b1, std::shared_ptr<BodyInstance> b2, Eigen::Vector3d& collision_point )
+void Collision::computeBoxBox()
 {
-    return gjk::areIntersecting(b1, b2, collision_point);
-}
-
-bool Collision::detectBoxBox( std::shared_ptr<BodyInstance> b1, std::shared_ptr<BodyInstance> b2, Eigen::Vector3d& collision_point )
-{
-    const Eigen::Vector3d L1 = 0.5 * b1->getModel()->asBox()->getSize();
-    const Eigen::Vector3d L2 = 0.5 * b2->getModel()->asBox()->getSize();
-    const Eigen::Matrix3d R1 = b1->collisionState().attitude.toRotationMatrix();
-    const Eigen::Matrix3d R2 = b2->collisionState().attitude.toRotationMatrix();
-    const Eigen::Vector3d P1 = b1->collisionState().position;
-    const Eigen::Vector3d P2 = b2->collisionState().position;
+    const Eigen::Vector3d L1 = 0.5 * _body1->getModel()->asBox()->getSize();
+    const Eigen::Vector3d L2 = 0.5 * _body2->getModel()->asBox()->getSize();
+    const Eigen::Matrix3d R1 = _body1->collisionState().attitude.toRotationMatrix();
+    const Eigen::Matrix3d R2 = _body2->collisionState().attitude.toRotationMatrix();
+    const Eigen::Vector3d P1 = _body1->collisionState().position;
+    const Eigen::Vector3d P2 = _body2->collisionState().position;
 
     Eigen::Matrix<double, 3, 15> candidates_n;
     candidates_n.col(0) = R1.col(0);
@@ -90,14 +92,39 @@ bool Collision::detectBoxBox( std::shared_ptr<BodyInstance> b1, std::shared_ptr<
         }
     }
 
-    return !is_separating_axis;
+    _exists = !is_separating_axis;
 }
 
-bool Collision::detectSphereBox(
-    std::shared_ptr<BodyInstance> b1,
-    std::shared_ptr<BodyInstance> b2,
-    Eigen::Vector3d& collision_point)
+void Collision::computeSphereSphere()
 {
+    const Eigen::Vector3d C1 = _body1->collisionState().position;
+    const Eigen::Vector3d C2 = _body2->collisionState().position;
+    const double R1 = _body1->getModel()->asSphere()->getRadius();
+    const double R2 = _body2->getModel()->asSphere()->getRadius();
+
+    _exists = (C2 - C1).norm() < R1 + R2;
+}
+
+void Collision::computeSphereBox()
+{
+    const bool uninverted = _body1->getModel()->isSphere();
+
+    std::shared_ptr<BodyInstance> b1;
+    std::shared_ptr<BodyInstance> b2;
+
+    if(uninverted)
+    {
+        b1 = _body1;
+        b2 = _body2;
+    }
+    else
+    {
+        b1 = _body2;
+        b2 = _body1;
+    }
+
+    if( b1->getModel()->isSphere() == false || b2->getModel()->isBox() == false) throw std::logic_error("Logic error");
+
     // the center of the sphere (b2 frame).
     Eigen::Vector3d center = b2->collisionState().attitude.inverse() * (b1->collisionState().position - b2->collisionState().position);
 
@@ -114,19 +141,12 @@ bool Collision::detectSphereBox(
     // the radius of the sphere.
     const double R = b1->getModel()->asSphere()->getRadius();
 
-    return (projection - center).squaredNorm() < R*R;
+    _exists =  (projection - center).squaredNorm() < R*R;
 }
 
-bool Collision::detectSphereSphere(
-    std::shared_ptr<BodyInstance> b1,
-    std::shared_ptr<BodyInstance> b2,
-    Eigen::Vector3d& collision_point)
+void Collision::computeGJK()
 {
-    const Eigen::Vector3d C1 = b1->collisionState().position;
-    const Eigen::Vector3d C2 = b2->collisionState().position;
-    const double R1 = b1->getModel()->asSphere()->getRadius();
-    const double R2 = b2->getModel()->asSphere()->getRadius();
-
-    return (C2 - C1).norm() < R1 + R2;
+    // TODO : compute frame.
+    _exists = gjk::areIntersecting(_body1, _body2, _point);
 }
 
