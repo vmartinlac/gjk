@@ -25,6 +25,7 @@ add_executable(
     src/BodyInstance.cpp
     src/BodyModel.cpp
     src/Cluster.cpp
+    src/Utils.cpp
     src/ViewerWidget.cpp
     src/MainWindow.cpp)
 

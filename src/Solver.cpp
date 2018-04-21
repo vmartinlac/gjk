@@ -94,13 +94,16 @@ void Solver::detectAndSolveCollisions()
     {
         for( int id2=id1+1; id2<num_bodies; id2++)
         {
-            Collision col;
-            col.compute( bodies[id1], bodies[id2] );
-
-            if(col.exists())
+            if( bodies[id1]->isMoving() || bodies[id2]->isMoving() )
             {
-                unionfind.union_set(id1, id2);
-                collisions.push_back(col);
+                Collision col;
+                col.compute( bodies[id1], bodies[id2] );
+
+                if(col.exists())
+                {
+                    unionfind.union_set(id1, id2);
+                    collisions.push_back(col);
+                }
             }
         }
     }

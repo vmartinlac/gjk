@@ -1,6 +1,7 @@
 * gérer collisions :
-    * calculer point de contact et frame lors de collision.
+    * calculer point de contact et frame lors de collision Box-Box et lors de l'utilisation de GJK.
     * améliorer critère d'arrêt GJK.
+    * Où définir les coefficients de restitution ?
     
 * fonctionnalité UI :
     * charger une scène depuis preset.

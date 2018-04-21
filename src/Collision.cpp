@@ -2,6 +2,7 @@
 #include "Collision.h"
 #include "GJK.h"
 #include "BodyModel.h"
+#include "Utils.h"
 
 bool Collision::compute(
     std::shared_ptr<BodyInstance> b1,
@@ -10,7 +11,7 @@ bool Collision::compute(
     _body1 = b1;
     _body2 = b2;
 
-    if( b1.get() == b2.get() )
+    if( b1->getId() == b2->getId() )
     {
         std::cerr << "Warning ! Collision detection algorithm body1 == body2 !" << std::endl;
     }
@@ -102,7 +103,13 @@ void Collision::computeSphereSphere()
     const double R1 = _body1->getModel()->asSphere()->getRadius();
     const double R2 = _body2->getModel()->asSphere()->getRadius();
 
-    _exists = (C2 - C1).norm() < R1 + R2;
+    const Eigen::Vector3d delta = C2 - C1;
+    const double dist = delta.norm();
+    const Eigen::Vector3d N = (dist > 1.0e-7) ? delta*(1.0/dist) : Eigen::Vector3d{1.0, 0.0, 0.0};
+
+    _point = 0.5*(R1*delta - R2*delta);
+    _exists = dist < R1 + R2;
+    _frame = Utils::completeFrame(N);
 }
 
 void Collision::computeSphereBox()
@@ -142,6 +149,8 @@ void Collision::computeSphereBox()
     const double R = b1->getModel()->asSphere()->getRadius();
 
     _exists =  (projection - center).squaredNorm() < R*R;
+    _point = b2->collisionState().position + b2->collisionState().attitude*projection;
+    _frame = Utils::completeFrame( (_point - b1->collisionState().position).normalized() );
 }
 
 void Collision::computeGJK()
