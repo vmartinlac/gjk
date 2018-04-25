@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Collision.h"
-#include "GJK.h"
+//#include "GJK.h"
 #include "BodyModel.h"
 #include "Utils.h"
 
@@ -156,6 +156,7 @@ void Collision::computeSphereBox()
 void Collision::computeGJK()
 {
     // TODO : compute frame.
-    _exists = gjk::areIntersecting(_body1, _body2, _point);
+    //_exists = gjk::areIntersecting(_body1, _body2, _point);
+    throw;
 }
 

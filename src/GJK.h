@@ -12,29 +12,181 @@ namespace gjk {
     template<int Dim>
     using SimplexPoints = Eigen::Matrix<double, Dim, Dim+1, Eigen::ColMajor>;
 
-    template<int Dim, typename PObject>
-    bool areIntersecting(PObject o1, PObject o2, Vector<Dim>& intersection_point);
-
-    // Find the point of the simplex which is closest to the origin.
-    //
-    // As input, { points, num_points } defines a simplex.
-    // The function computes the points which is inside the simplex that is closest to the origin.
-    // As output, { points, num_points } defines the subsimplex containing this closest point and { proximal } is this so-called closest point.
-    // If num_points == Dim+1 at output, then the closest point lies in the interior of the input simplex.
-    // If num_points < Dim+1 at output, then the closest point lies on the boundary of the input simplex and in the interior of the output simplex.
     template<int Dim>
-    void distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vector<Dim>& proximal );
+    void distanceSubalgorithm(
+        const Vector<Dim>& target,
+        SimplexPoints<Dim>& points,
+        int& num_points,
+        Vector<Dim>& proximal );
+
+    template<int Dim, typename SupportFunction>
+    bool findClosestPoint(
+        SupportFunction support,
+        const Vector<Dim>& target,
+        bool useguess,
+        Vector<Dim>& closest,
+        bool& targetisinside );
+
+    template<int Dim, typename SupportFunction1, typename SupportFunction2>
+    bool findClosestPoints(
+        SupportFunction1 support1,
+        SupportFunction2 support2,
+        bool useguess,
+        Vector<Dim>& pt1,
+        Vector<Dim>& pt2,
+        bool& collide);
+
+    template< int Dim, typename SupportFunction1, typename SupportFunction2 >
+    bool testCollision(
+        SupportFunction1 support1,
+        SupportFunction2 support2,
+        bool& collide );
+}
+
+template<int Dim, typename SupportFunction1, typename SupportFunction2>
+bool gjk::findClosestPoints(
+    SupportFunction1 support1,
+    SupportFunction2 support2,
+    bool useguess,
+    Vector<Dim>& pt1,
+    Vector<Dim>& pt2,
+    bool& collide)
+{
+    if(useguess == false)
+    {
+        Vector<Dim> direction;
+        direction.setZero();
+        direction(0) = 1.0;
+        pt1 = support1(direction);
+        pt2 = support2(direction);
+    }
+
+    int turn = 0;
+
+    bool ret = true;
+    bool go_on = true;
+    int max_iter = 1000;
+    collide = false;
+
+    while(go_on)
+    {
+        if(max_iter <= 0)
+        {
+            ret = false;
+        }
+        else
+        {
+            Vector<Dim> pre;
+            Vector<Dim> post;
+
+            if(max_iter & 1)
+            {
+                pre = pt2;
+                ret = findClosestPoint(support2, pt1, true, pt2, collide);
+                post = pt2;
+            }
+            else
+            {
+                pre = pt1;
+                ret = findClosestPoint(support1, pt2, true, pt1, collide);
+                post = pt1;
+            }
+
+            if(ret == false || collide || (post-pre).norm() < 1.0e-4)
+            {
+                go_on = false;
+            }
+        }
+    }
+
+    return ret;
+}
+
+template< int Dim, typename SupportFunction1, typename SupportFunction2 >
+bool gjk::testCollision( SupportFunction1 support1, SupportFunction2 support2, bool& collide )
+{
+    auto support = [&support1, &support2] (const Vector<Dim>& dir) -> gjk::Vector<Dim>
+    {
+        return support2(dir) - support1(-dir);
+    };
+
+    Vector<Dim> closest;
+    Vector<Dim> target;
+    target.setZero();
+    return findClosestPoint(support, target, false, closest, collide);
+}
+
+template<int Dim, typename SupportFunction>
+bool gjk::findClosestPoint(SupportFunction support, const Vector<Dim>& target, bool useguess, Vector<Dim>& closest, bool& targetisinside)
+{
+    if(useguess == false)
+    {
+        Vector<Dim> direction;
+        direction.setZero();
+        direction(0) = 1.0;
+        closest = support( direction );
+    }
+
+    int num_points = 1;
+    SimplexPoints<Dim> simplex;
+    simplex.col(0) = closest;
+
+    bool ret = true;
+    int max_iter = 100;
+
+    const double epsilon1 = 1.0e-6;
+    const double epsilon2 = 1.0e-4;
+
+    bool go_on = true;
+
+    while( go_on )
+    {
+        const Vector<Dim> direction = target - closest;
+        const double distance = direction.norm();
+
+        if( max_iter <= 0 )
+        {
+            go_on = false;
+            ret = false;
+            targetisinside = false;
+            std::cout << "GJK : max number of iterations reached !" << std::endl;
+        }
+        else if( distance < epsilon2 || num_points == Dim+1 )
+        {
+            go_on = false;
+            ret = true;
+            targetisinside = true;
+        }
+        else
+        {
+            simplex.col(num_points) = support( direction );
+            num_points++;
+
+            Vector<Dim> closest_prev = closest;
+            distanceSubalgorithm(target, simplex, num_points, closest);
+
+            if( (closest - closest_prev).norm() < epsilon1 )
+            {
+                go_on = false;
+                ret = true;
+                targetisinside = false;
+            }
+        }
+        std::cout << closest << std::endl;
+
+        max_iter--;
+    }
+
+    return ret;
 }
 
 template<int Dim>
-void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vector<Dim>& proximal )
+void gjk::distanceSubalgorithm(
+    const Vector<Dim>& target,
+    SimplexPoints<Dim>& points,
+    int& num_points,
+    Vector<Dim>& proximal )
 {
-   /*
-   std::cout << "Call to distance subalgorithm" << std::endl;
-   std::cout << "numpts = " << num_points << std::endl;
-   std::cout << points << std::endl;
-   */
-
     if(num_points == 0)
     {
         throw std::runtime_error("Internal error");
@@ -57,7 +209,7 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
            {
               A(i, j) = ( points.col(i) - points.col(0) ).dot( points.col(j) );
            }
-           Y(i) = 0.0;
+           Y(i) = ( points.col(i) - points.col(0) ).dot( target );
         }
 
         Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
@@ -65,7 +217,7 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
 
         if( solver.isInvertible() == false )
         {
-            std::cout << "Non invertible matrix in GJK" << std::endl;
+            //std::cout << "Non invertible matrix in GJK" << std::endl;
         }
 
         Eigen::VectorXd X = solver.solve(Y);
@@ -93,64 +245,9 @@ void gjk::distanceSubalgorithm( SimplexPoints<Dim>& points, int& num_points, Vec
 
         X /= X.sum();
         
-        // TODO : what if new_num_points == 0 ?
-
         proximal = points.leftCols(num_points) * X;
         num_points = new_num_points;
         points.swap(new_points);
     }
-}
-
-template<int Dim, typename PObject>
-bool gjk::areIntersecting(PObject o1, PObject o2, Vector<Dim>& intersection_point)
-{
-    auto support = [o1, o2] (const Vector<Dim>& dir) -> Vector<Dim>
-    {
-        return o2->support(dir) - o1->support(-dir);
-    };
-
-    SimplexPoints<Dim> points;
-    int num_points = 0;
-
-    Vector<Dim> v;
-    {
-        Vector<Dim> dir = Vector<Dim>::Zero();
-        dir(0) = 1.0;
-        v = support( dir );
-    }
-
-    bool go_on = true;
-    int max_iter = 100;
-    bool ret = false;
-    const double epsilon1 = 1.0e-6;
-    const double epsilon2 = 1.0e-4;
-
-    while( go_on && max_iter > 0 )
-    {
-        points.col(num_points) = support(-v);
-        num_points++;
-
-        if( (-v).dot( points.col(num_points-1) - v ) <= epsilon1 )
-        {
-            go_on = false;
-            ret = false;
-        }
-        else
-        {
-            distanceSubalgorithm(points, num_points, v);
-
-            if( num_points == Dim+1 || v.norm() < epsilon2 )
-            {
-                go_on = false;
-                ret = true;
-            }
-        }
-
-        max_iter--;
-    }
-
-    if(max_iter <= 0) std::cout << "GJK : max number of iterations reached !" << std::endl;
-
-    return ret;
 }
 
