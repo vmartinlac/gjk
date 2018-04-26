@@ -21,7 +21,7 @@ namespace gjk {
 
     template<int Dim, typename SupportFunction>
     bool findClosestPoint(
-        SupportFunction support,
+        const SupportFunction& support,
         const Vector<Dim>& target,
         bool useguess,
         Vector<Dim>& closest,
@@ -29,8 +29,8 @@ namespace gjk {
 
     template<int Dim, typename SupportFunction1, typename SupportFunction2>
     bool findClosestPoints(
-        SupportFunction1 support1,
-        SupportFunction2 support2,
+        const SupportFunction1& support1,
+        const SupportFunction2& support2,
         bool useguess,
         Vector<Dim>& pt1,
         Vector<Dim>& pt2,
@@ -38,15 +38,15 @@ namespace gjk {
 
     template< int Dim, typename SupportFunction1, typename SupportFunction2 >
     bool testCollision(
-        SupportFunction1 support1,
-        SupportFunction2 support2,
+        const SupportFunction1& support1,
+        const SupportFunction2& support2,
         bool& collide );
 }
 
 template<int Dim, typename SupportFunction1, typename SupportFunction2>
 bool gjk::findClosestPoints(
-    SupportFunction1 support1,
-    SupportFunction2 support2,
+    const SupportFunction1& support1,
+    const SupportFunction2& support2,
     bool useguess,
     Vector<Dim>& pt1,
     Vector<Dim>& pt2,
@@ -61,49 +61,14 @@ bool gjk::findClosestPoints(
         pt2 = support2(direction);
     }
 
-    int turn = 0;
+    // TODO.
+    throw;
 
-    bool ret = true;
-    bool go_on = true;
-    int max_iter = 1000;
-    collide = false;
-
-    while(go_on)
-    {
-        if(max_iter <= 0)
-        {
-            ret = false;
-        }
-        else
-        {
-            Vector<Dim> pre;
-            Vector<Dim> post;
-
-            if(max_iter & 1)
-            {
-                pre = pt2;
-                ret = findClosestPoint(support2, pt1, true, pt2, collide);
-                post = pt2;
-            }
-            else
-            {
-                pre = pt1;
-                ret = findClosestPoint(support1, pt2, true, pt1, collide);
-                post = pt1;
-            }
-
-            if(ret == false || collide || (post-pre).norm() < 1.0e-4)
-            {
-                go_on = false;
-            }
-        }
-    }
-
-    return ret;
+    return false;
 }
 
 template< int Dim, typename SupportFunction1, typename SupportFunction2 >
-bool gjk::testCollision( SupportFunction1 support1, SupportFunction2 support2, bool& collide )
+bool gjk::testCollision( const SupportFunction1& support1, const SupportFunction2& support2, bool& collide )
 {
     auto support = [&support1, &support2] (const Vector<Dim>& dir) -> gjk::Vector<Dim>
     {
@@ -117,7 +82,7 @@ bool gjk::testCollision( SupportFunction1 support1, SupportFunction2 support2, b
 }
 
 template<int Dim, typename SupportFunction>
-bool gjk::findClosestPoint(SupportFunction support, const Vector<Dim>& target, bool useguess, Vector<Dim>& closest, bool& targetisinside)
+bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& target, bool useguess, Vector<Dim>& closest, bool& targetisinside)
 {
     if(useguess == false)
     {
@@ -132,7 +97,7 @@ bool gjk::findClosestPoint(SupportFunction support, const Vector<Dim>& target, b
     simplex.col(0) = closest;
 
     bool ret = true;
-    int max_iter = 100;
+    int max_iter = 200;
 
     const double epsilon1 = 1.0e-6;
     const double epsilon2 = 1.0e-4;
@@ -162,18 +127,27 @@ bool gjk::findClosestPoint(SupportFunction support, const Vector<Dim>& target, b
             simplex.col(num_points) = support( direction );
             num_points++;
 
-            Vector<Dim> closest_prev = closest;
-            distanceSubalgorithm(target, simplex, num_points, closest);
-
-            if( (closest - closest_prev).norm() < epsilon1 )
+            if( false && (simplex.col(num_points-1) - target).dot(direction) < 0.0 )
             {
                 go_on = false;
                 ret = true;
                 targetisinside = false;
             }
-        }
-        std::cout << closest << std::endl;
+            else
+            {
+                Vector<Dim> closest_prev = closest;
+                distanceSubalgorithm(target, simplex, num_points, closest);
 
+                if( (closest - closest_prev).norm() < 1.0e-9 )
+                {
+                    go_on = false;
+                    ret = true;
+                    targetisinside = false;
+                }
+            }
+        }
+
+        std::cout << closest.transpose() << std::endl;
         max_iter--;
     }
 
@@ -217,7 +191,7 @@ void gjk::distanceSubalgorithm(
 
         if( solver.isInvertible() == false )
         {
-            //std::cout << "Non invertible matrix in GJK" << std::endl;
+            std::cout << "Non invertible matrix in GJK" << std::endl;
         }
 
         Eigen::VectorXd X = solver.solve(Y);
@@ -232,10 +206,6 @@ void gjk::distanceSubalgorithm(
                 new_points.col(new_num_points) = points.col(i);
                 new_num_points++;
             }
-            else
-            {
-                X(i) = 0.0;
-            }
         }
 
         if( new_num_points == 0 )
@@ -243,9 +213,19 @@ void gjk::distanceSubalgorithm(
             throw std::runtime_error("GJK failed.");
         }
 
-        X /= X.sum();
-        
-        proximal = points.leftCols(num_points) * X;
+        Eigen::MatrixXd A(new_num_points, new_num_points);
+        Eigen::VectorXd Y(new_num_points);
+
+        throw; // TODO !
+        for(int i=0; i<num_points; i++)
+        {
+            if( X(i) > 0.0 )
+            {
+                ;
+            }
+        }
+
+        //proximal = points.leftCols(num_points) * X;
         num_points = new_num_points;
         points.swap(new_points);
     }

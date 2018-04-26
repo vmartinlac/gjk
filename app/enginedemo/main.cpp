@@ -10,34 +10,6 @@
 
 int main(int num_args, char** args)
 {
-    /*
-    {
-        auto support2 = [] (const gjk::Vector<2>& dir) -> gjk::Vector<2>
-        {
-            gjk::Vector<2> ret;
-            ret(0) = (dir(0) > 0.0) ? 1.0 : -1.0;
-            ret(1) = (dir(1) > 0.0) ? 1.0 : -1.0;
-            return ret;
-        };
-
-        auto support1 = [] (const gjk::Vector<2>& dir) -> gjk::Vector<2>
-        {
-            const gjk::Vector<2> C{10.0, 0.0};
-            const double r = 1.0;
-
-            return C + r*dir.normalized();
-        };
-
-        bool collide;
-        bool ret = gjk::testCollision<2>(support1, support2, collide);
-
-        std::cout << "ret = " << ret << std::endl;
-        std::cout << "collide = " << collide << std::endl;
-
-        return 0;
-    }
-    */
-
     QApplication app(num_args, args);
     World world;
     Solver solver;
