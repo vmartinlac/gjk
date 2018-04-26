@@ -19,6 +19,12 @@ namespace gjk {
         int& num_points,
         Vector<Dim>& proximal );
 
+    template<int Dim>
+    Eigen::VectorXd projectInLinearSpan(
+        const Vector<Dim>& target,
+        SimplexPoints<Dim>& points,
+        int& num_points);
+
     template<int Dim, typename SupportFunction>
     bool findClosestPoint(
         const SupportFunction& support,
@@ -62,9 +68,7 @@ bool gjk::findClosestPoints(
     }
 
     // TODO.
-    throw;
-
-    return false;
+    throw std::runtime_error("not implemented");
 }
 
 template< int Dim, typename SupportFunction1, typename SupportFunction2 >
@@ -155,6 +159,38 @@ bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& ta
 }
 
 template<int Dim>
+Eigen::VectorXd gjk::projectInLinearSpan(
+    const Vector<Dim>& target,
+    SimplexPoints<Dim>& points,
+    int& num_points)
+{
+    Eigen::MatrixXd A(num_points, num_points);
+    Eigen::VectorXd Y(num_points);
+
+    A.row(0).fill(1.0);
+    Y(0) = 1.0;
+
+    for(int i=1; i<num_points; i++)
+    {
+       for(int j=0; j<num_points; j++)
+       {
+          A(i, j) = ( points.col(i) - points.col(0) ).dot( points.col(j) );
+       }
+       Y(i) = ( points.col(i) - points.col(0) ).dot( target );
+    }
+
+    Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
+    solver.compute(A);
+
+    if( solver.isInvertible() == false )
+    {
+        std::cout << "Non invertible matrix in GJK" << std::endl;
+    }
+
+    return solver.solve(Y);
+}
+
+template<int Dim>
 void gjk::distanceSubalgorithm(
     const Vector<Dim>& target,
     SimplexPoints<Dim>& points,
@@ -171,30 +207,10 @@ void gjk::distanceSubalgorithm(
     }
     else
     {
-        Eigen::MatrixXd A(num_points, num_points);
-        Eigen::VectorXd Y(num_points);
-
-        A.row(0).fill(1.0);
-        Y(0) = 1.0;
-
-        for(int i=1; i<num_points; i++)
-        {
-           for(int j=0; j<num_points; j++)
-           {
-              A(i, j) = ( points.col(i) - points.col(0) ).dot( points.col(j) );
-           }
-           Y(i) = ( points.col(i) - points.col(0) ).dot( target );
-        }
-
-        Eigen::FullPivHouseholderQR< Eigen::MatrixXd > solver;
-        solver.compute(A);
-
-        if( solver.isInvertible() == false )
-        {
-            std::cout << "Non invertible matrix in GJK" << std::endl;
-        }
-
-        Eigen::VectorXd X = solver.solve(Y);
+        Eigen::VectorXd X = projectInLinearSpan(
+            target,
+            points,
+            num_points);
 
         int new_num_points = 0;
         SimplexPoints<Dim> new_points;
@@ -212,20 +228,19 @@ void gjk::distanceSubalgorithm(
         {
             throw std::runtime_error("GJK failed.");
         }
-
-        Eigen::MatrixXd A(new_num_points, new_num_points);
-        Eigen::VectorXd Y(new_num_points);
-
-        throw; // TODO !
-        for(int i=0; i<num_points; i++)
+        else if(new_num_points == 1)
         {
-            if( X(i) > 0.0 )
-            {
-                ;
-            }
+            proximal = new_points.col(0);
+        }
+        else
+        {
+            Eigen::VectorXd Y = projectInLinearSpan(
+                target,
+                new_points,
+                new_num_points);
+            proximal = new_points.leftCols(new_num_points) * Y;
         }
 
-        //proximal = points.leftCols(num_points) * X;
         num_points = new_num_points;
         points.swap(new_points);
     }

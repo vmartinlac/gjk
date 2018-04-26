@@ -1,21 +1,27 @@
+#include <QtTest/QtTest>
 #include <iostream>
+#include "testGJK.h"
 #include "GJK.h"
 
-void test1()
+void testGJK::test1()
 {
     gjk::Vector<2> target{1.0, 1.0};
 
     gjk::SimplexPoints<2> points;
     points.col(0) << -1.0, 1.0;
+
     int num_points = 1;
+
+    gjk::Vector<2> reference{-1.0, 1.0};
 
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    if( ( proximal-points.col(0)).norm() > 1.0e-5 || num_points != 1) throw;
+    QVERIFY( (proximal - reference).norm() < 1.0e-5 );
+    QVERIFY( num_points == 1 );
 }
 
-void test2()
+void testGJK::test2()
 {
     gjk::Vector<2> target{1.0, 0.0};
 
@@ -29,10 +35,11 @@ void test2()
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    if( ( proximal - ref ).norm() > 1.0e-6 || num_points != 2) throw;
+    QVERIFY( (proximal - ref).norm() < 1.0e-5 );
+    QVERIFY( num_points == 2 );
 }
 
-void test3()
+void testGJK::test3()
 {
     gjk::Vector<2> target{1.0, 2.0};
 
@@ -46,10 +53,11 @@ void test3()
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    if( ( proximal - ref ).norm() > 1.0e-6 || num_points != 1) throw;
+    QVERIFY( (proximal - ref).norm() < 1.0e-5 );
+    QVERIFY( num_points == 1 );
 }
 
-void test4()
+void testGJK::test4()
 {
     gjk::Vector<2> target{1.0, -2.0};
 
@@ -63,10 +71,11 @@ void test4()
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    if( ( proximal - ref ).norm() > 1.0e-6 || num_points != 1) throw;
+    QVERIFY( ( proximal - ref ).norm() < 1.0e-6 );
+    QVERIFY( num_points == 1 );
 }
 
-void test5()
+void testGJK::test5()
 {
     gjk::Vector<2> target{-1.0, -1.0};
 
@@ -81,13 +90,12 @@ void test5()
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    if( ( proximal - ref ).norm() > 1.0e-6 || num_points != 1) throw;
+    QVERIFY( ( proximal - ref ).norm() < 1.0e-6 );
+    QVERIFY( num_points == 1 );
 }
 
-void test6()
+void testGJK::test6()
 {
-    std::cout << "test6" << std::endl;
-
     gjk::Vector<2> target{0.5, -1.0};
 
     gjk::SimplexPoints<2> points;
@@ -101,19 +109,27 @@ void test6()
     gjk::Vector<2> proximal;
     gjk::distanceSubalgorithm(target, points, num_points, proximal);
 
-    std::cout << num_points << std::endl;
-    std::cout << proximal.transpose() << std::endl;
-
-    if( ( proximal - ref ).norm() > 1.0e-6 || num_points != 2) throw;
+    QVERIFY( ( proximal - ref ).norm() < 1.0e-6 );
+    QVERIFY( num_points == 2 );
 }
 
-int main(int num_args, char** args)
+void testGJK::test7()
 {
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    return 0;
+    gjk::Vector<2> target{0.1, 0.1};
+
+    gjk::SimplexPoints<2> points;
+    points.col(0) << 0.0, 1.0;
+    points.col(1) << 0.0, 0.0;
+    points.col(2) << 1.0, 0.0;
+    int num_points = 3;
+
+    gjk::Vector<2> ref{0.1, 0.1};
+
+    gjk::Vector<2> proximal;
+    gjk::distanceSubalgorithm(target, points, num_points, proximal);
+
+    QVERIFY( ( proximal - ref ).norm() < 1.0e-6 );
+    QVERIFY( num_points == 3 );
 }
+
+QTEST_MAIN(testGJK)

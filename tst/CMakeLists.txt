@@ -1,3 +1,3 @@
-add_executable(tests tests.cpp)
-target_link_libraries(tests PUBLIC engine)
-add_test(tests tests)
+add_executable(testGJK testGJK.cpp)
+target_link_libraries(testGJK PUBLIC engine Qt5::Test)
+add_test(testGJK testGJK)
