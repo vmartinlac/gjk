@@ -96,12 +96,11 @@ bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& ta
         closest = support( direction );
     }
 
-    int num_points = 1;
+    int num_points = 0;
     SimplexPoints<Dim> simplex;
-    simplex.col(0) = closest;
 
     bool ret = true;
-    int max_iter = 200;
+    int max_iter = 2000;
 
     const double epsilon1 = 1.0e-6;
     const double epsilon2 = 1.0e-4;
@@ -118,6 +117,7 @@ bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& ta
             go_on = false;
             ret = false;
             targetisinside = false;
+
             std::cout << "GJK : max number of iterations reached !" << std::endl;
         }
         else if( distance < epsilon2 || num_points == Dim+1 )
@@ -151,7 +151,6 @@ bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& ta
             }
         }
 
-        std::cout << closest.transpose() << std::endl;
         max_iter--;
     }
 
