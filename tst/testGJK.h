@@ -6,11 +6,12 @@ class testGJK : public QObject
 {
     Q_OBJECT
 private slots:
-    void test1();
-    void test2();
-    void test3();
-    void test4();
-    void test5();
-    void test6();
-    void test7();
+    void testSubalgorithm1();
+    void testSubalgorithm2();
+    void testSubalgorithm3();
+    void testSubalgorithm4();
+    void testSubalgorithm5();
+    void testSubalgorithm6();
+    void testSubalgorithm7();
+    void testFindClosestPoint1();
 };

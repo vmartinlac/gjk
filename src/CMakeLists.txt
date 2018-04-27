@@ -5,6 +5,7 @@ add_library(
     Collision.cpp
     Spring.cpp
     Solver.cpp
+    GJK2.cpp
     BodyInstance.cpp
     BodyModel.cpp
     Cluster.cpp
