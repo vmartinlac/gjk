@@ -3,7 +3,7 @@
 #include <QPainter>
 #include <QKeyEvent>
 #include "Window.h"
-#include "GJK.h"
+#include "GJK2.h"
 
 
 Window::Window(QWidget* parent) : QWidget(parent)
@@ -40,20 +40,20 @@ void Window::createBox()
 
 void Window::computeClosestPoints()
 {
-    gjk::Vector<2> closest;
-    gjk::Vector<2> target{ width()/2, height()/2 };
+    gjk2::Vector<2> target{ width()/2, height()/2 };
 
-    gjk::findClosestPoint(
-        *_shape,
-        target,
-        false,
-        closest,
-        _inside);
+    gjk2::SolverShapePoint<2> solver;
+    solver.run(*_shape, target);
 
-    _closestPoints[0].setX( target(0) );
-    _closestPoints[0].setY( target(1) );
-    _closestPoints[1].setX( closest(0) );
-    _closestPoints[1].setY( closest(1) );
+    if(solver.hasConverged())
+    {
+        gjk2::Vector<2> closest = solver.closest();
+
+        _closestPoints[0].setX( target(0) );
+        _closestPoints[0].setY( target(1) );
+        _closestPoints[1].setX( closest(0) );
+        _closestPoints[1].setY( closest(1) );
+    }
 }
 
 void Window::paintEvent(QPaintEvent*)

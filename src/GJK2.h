@@ -13,6 +13,9 @@ namespace gjk2
     template<int Dim>
     using Vector = Eigen::Matrix<double, Dim, 1>;
 
+    template<int Rows, int Cols>
+    using Matrix = Eigen::Matrix<double, Rows, Cols, Eigen::ColMajor>;
+
     template<int Dim>
     class Shape;
 
@@ -24,6 +27,9 @@ namespace gjk2
 
     template<int Dim>
     class SolverShapeShape;
+
+    template<int Dim>
+    class Subalgorithm;
 };
 
 template<int Dim>
@@ -54,13 +60,6 @@ public:
     double distance() { return _distance; }
     bool inside() { return _inside; }
 protected:
-    void distanceSubalgorithme();
-protected:
-    Vector<Dim> _target;
-    const Shape<Dim>* _shape;
-    int _numPoints;
-    Eigen::Matrix<double, Dim, Dim+1, Eigen::ColMajor> _points;
-protected:
     bool _converged;
     Vector<Dim> _closest;
     double _distance;
@@ -85,3 +84,10 @@ protected:
     bool _collision;
 };
 
+template<int Dim>
+class gjk2::Subalgorithm
+{
+public:
+    bool run(int& num_points, Matrix<Dim,Dim+1>& points, Vector<Dim>& closest);
+protected:
+};
