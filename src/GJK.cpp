@@ -1,8 +1,16 @@
 #include <algorithm>
-#include "GJK2.h"
+#include "GJK.h"
+
+/*
+This subalgorithm for GJK was inspired by the following article :
+
+Montanari, Mattia & Petrinic, Nik & Barbieri, Ettore. (2017).
+Improving the GJK Algorithm for Faster and More Reliable Distance Queries Between Convex Objects.
+ACM Transactions on Graphics. 36. 1-17. 10.1145/3083724. 
+*/
 
 template<int Dim>
-bool gjk2::subalgorithm(
+bool gjk::subalgorithm(
     const Vector<Dim>& target,
     int& num_points,
     Matrix<Dim,Dim+1>& points,
@@ -151,7 +159,26 @@ bool gjk2::subalgorithm(
                     Matrix<Dim, Dim+1> test_points;
                     Vector<Dim> test_closest;
 
-                    // TODO
+                    test_num_points = num_points-1;
+
+                    int k = 0;
+                    for(int j=0; j<num_points; j++)
+                    {
+                        if(j != i)
+                        {
+                            test_points.col(k) = points.col(j);
+                            k++;
+                        }
+                    }
+
+                    subalgorithm(target, test_num_points, test_points, test_closest);
+
+                    if(first || (test_closest - target).squaredNorm() < (best_closest - target).squaredNorm())
+                    {
+                        best_num_points = test_num_points;
+                        best_points.swap(test_points);
+                        best_closest.swap(test_closest);
+                    }
 
                     first = false;
                 }
@@ -173,7 +200,7 @@ bool gjk2::subalgorithm(
 }
 
 template<int Dim>
-bool gjk2::SolverShapePoint<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>& target)
+void gjk::Solver<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>& target)
 {
     int num_points = 0;
     Matrix<Dim, Dim+1> points;
@@ -187,7 +214,7 @@ bool gjk2::SolverShapePoint<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>
         v = shape.support(direction);
     }
 
-    int max_iter = 50;
+    int max_iter = 100;
     bool go_on = true;
 
     while( go_on )
@@ -250,61 +277,48 @@ bool gjk2::SolverShapePoint<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>
     if(_converged)
     {
         _distance = (target - v).norm();
-        _closest = v;
+        _closest1 = v;
     }
-
-    return _converged;
 }
 
 template<int Dim>
-bool gjk2::SolverShapeShape<Dim>::run(const Shape<Dim>& shape1, const Shape<Dim>& shape2)
+void gjk::Solver<Dim>::run(const Shape<Dim>& shape1, const Shape<Dim>& shape2)
 {
     MinkowskiDifference<Dim> shape(&shape1, &shape2);
 
     Vector<Dim> target;
     target.setZero();
 
-    SolverShapePoint<Dim> solver;
-    _converged = solver.run(shape, target);
+    run(shape, target);
 
     if(_converged)
     {
-        _distance = solver.distance();
-        _collision = solver.inside();
-        if(_collision)
-        {
-            _closest1.setZero();
-            _closest2.setZero();
-        }
-        else
-        {
-            Vector<Dim> direction = solver.closest();
-            _closest1 = shape1.support(-direction);
-            _closest2 = shape2.support(direction);
-        }
-    }
+        // _distance and _inside are already set.
 
-    return _converged;
+        Vector<Dim> direction = _closest;
+        _closest1 = shape1.support(-direction);
+        _closest2 = shape2.support(direction);
+    }
 }
 
 template<int Dim>
-gjk2::MinkowskiDifference<Dim>::MinkowskiDifference(const Shape<Dim>* shape1, const Shape<Dim>* shape2)
+gjk::MinkowskiDifference<Dim>::MinkowskiDifference(const Shape<Dim>* shape1, const Shape<Dim>* shape2)
 {
     _shape1 = shape1;
     _shape2 = shape2;
 }
 
 template<int Dim>
-gjk2::Vector<Dim> gjk2::MinkowskiDifference<Dim>::support(const Vector<Dim>& dir) const
+gjk::Vector<Dim> gjk::MinkowskiDifference<Dim>::support(const Vector<Dim>& dir) const
 {
     return _shape2->support(dir) - _shape1->support(-dir);
 }
 
 // instantiate templates.
 
-template bool gjk2::SolverShapePoint<2>::run(const Shape<2>& shape1, const Vector<2>& target);
-template bool gjk2::SolverShapePoint<3>::run(const Shape<3>& shape1, const Vector<3>& target);
+template void gjk::Solver<2>::run(const Shape<2>& shape1, const Vector<2>& target);
+template void gjk::Solver<2>::run(const Shape<2>& shape1, const Shape<2>& shape2);
 
-template bool gjk2::SolverShapeShape<2>::run(const Shape<2>& shape1, const Shape<2>& shape2);
-template bool gjk2::SolverShapeShape<3>::run(const Shape<3>& shape1, const Shape<3>& shape2);
+template void gjk::Solver<3>::run(const Shape<3>& shape1, const Vector<3>& target);
+template void gjk::Solver<3>::run(const Shape<3>& shape1, const Shape<3>& shape2);
 

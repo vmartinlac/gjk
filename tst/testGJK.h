@@ -13,6 +13,7 @@ private slots:
     void testSubalgorithm5();
     void testSubalgorithm6();
     void testSubalgorithm7();
-    void testFindClosestPoint1();
-    void tmp();
+    void testShapePoint1();
+    void testShapePoint2();
+    void testShapePoint3();
 };

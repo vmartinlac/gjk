@@ -9,10 +9,10 @@ class QResizeEvent;
 class QMousePressEvent;
 class QKeyPressEvent;
 
-class Window : public QWidget
+class WindowShapePoint : public QWidget
 {
 public:
-    Window(QWidget* parent=nullptr);
+    WindowShapePoint(QWidget* parent=nullptr);
 protected:
     void paintEvent(QPaintEvent*);
     void resizeEvent(QResizeEvent*);

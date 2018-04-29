@@ -6,7 +6,6 @@
 #include "BodyModel.h"
 #include "MainWindow.h"
 #include "PhysicalConstants.h"
-#include "GJK.h"
 
 int main(int num_args, char** args)
 {

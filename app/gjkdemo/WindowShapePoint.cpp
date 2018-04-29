@@ -2,11 +2,10 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QKeyEvent>
-#include "Window.h"
-#include "GJK2.h"
+#include "WindowShapePoint.h"
+#include "GJK.h"
 
-
-Window::Window(QWidget* parent) : QWidget(parent)
+WindowShapePoint::WindowShapePoint(QWidget* parent) : QWidget(parent)
 {
     setWindowTitle("GJK demo");
     resize(640, 480);
@@ -14,7 +13,7 @@ Window::Window(QWidget* parent) : QWidget(parent)
     computeClosestPoints();
 }
 
-void Window::createCircle()
+void WindowShapePoint::createCircle()
 {
     const double w = width();
     const double h = height();
@@ -26,7 +25,7 @@ void Window::createCircle()
     _shape = std::shared_ptr<Shape>( s1 );
 }
 
-void Window::createBox()
+void WindowShapePoint::createBox()
 {
     const double w = width();
     const double h = height();
@@ -38,16 +37,17 @@ void Window::createBox()
     _shape = std::shared_ptr<Shape>( s1 );
 }
 
-void Window::computeClosestPoints()
+void WindowShapePoint::computeClosestPoints()
 {
-    gjk2::Vector<2> target{ width()/2, height()/2 };
+    gjk::Vector<2> target{ width()/2, height()/2 };
 
-    gjk2::SolverShapePoint<2> solver;
+    gjk::Solver<2> solver;
     solver.run(*_shape, target);
 
     if(solver.hasConverged())
     {
-        gjk2::Vector<2> closest = solver.closest();
+        gjk::Vector<2> closest = solver.closest();
+        _inside = solver.inside();
 
         _closestPoints[0].setX( target(0) );
         _closestPoints[0].setY( target(1) );
@@ -56,7 +56,7 @@ void Window::computeClosestPoints()
     }
 }
 
-void Window::paintEvent(QPaintEvent*)
+void WindowShapePoint::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
 
@@ -76,31 +76,31 @@ void Window::paintEvent(QPaintEvent*)
 
     painter.drawLine(_closestPoints[0], _closestPoints[1]);
 
-    painter.setBrush( Qt::black );
+    painter.setBrush( Qt::NoBrush );
     painter.drawEllipse( _closestPoints[0], 5.0, 5.0 );
     painter.drawEllipse( _closestPoints[1], 5.0, 5.0 );
 }
 
-void Window::mousePressEvent(QMouseEvent* ev)
+void WindowShapePoint::mousePressEvent(QMouseEvent* ev)
 {
     _shape->setPosition( ev->pos() );
     computeClosestPoints();
     update();
 }
 
-void Window::mouseMoveEvent(QMouseEvent* ev)
+void WindowShapePoint::mouseMoveEvent(QMouseEvent* ev)
 {
     _shape->setPosition( ev->pos() );
     computeClosestPoints();
     update();
 }
 
-void Window::resizeEvent(QResizeEvent*)
+void WindowShapePoint::resizeEvent(QResizeEvent*)
 {
     computeClosestPoints();
 }
 
-void Window::keyPressEvent(QKeyEvent* e)
+void WindowShapePoint::keyPressEvent(QKeyEvent* e)
 {
     if(e->key() == Qt::Key_B)
     {

@@ -6,9 +6,9 @@ Circle::Circle()
     _radius = 1.0;
 }
 
-gjk2::Vector<2> Circle::support(const gjk2::Vector<2>& dir) const
+gjk::Vector<2> Circle::support(const gjk::Vector<2>& dir) const
 {
-    gjk2::Vector<2> center{ _center.x(), _center.y() };
+    gjk::Vector<2> center{ _center.x(), _center.y() };
     return center + _radius * dir.normalized();
 }
 
@@ -32,10 +32,10 @@ Box::Box()
     _size[0] = _size[1] = 1.0;
 }
 
-gjk2::Vector<2> Box::support(const gjk2::Vector<2>& dir) const
+gjk::Vector<2> Box::support(const gjk::Vector<2>& dir) const
 {
-    gjk2::Vector<2> ret;
-    gjk2::Vector<2> center{ _center.x(), _center.y() };
+    gjk::Vector<2> ret;
+    gjk::Vector<2> center{ _center.x(), _center.y() };
 
     for(int i=0; i<2; i++)
     {
