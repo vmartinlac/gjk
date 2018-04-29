@@ -50,8 +50,23 @@ Eigen::Vector3d BodyInstance::getAngularVelocityBF(const BodyState& state)
     return _model->getInertiaTensorSolver().solve( state.attitude.inverse() * state.angular_momentum );
 }
 
-Eigen::Vector3d BodyInstance::support(const Eigen::Vector3d& direction)
+Eigen::Vector3d BodyInstance::support(const Eigen::Vector3d& direction, KindOfState k)
 {
-    BodyState& s = collisionState();
-    return s.position + s.attitude* getModel()->support( s.attitude.inverse() * direction );
+    BodyState& s = state(k);
+    return s.BF2WF( _model->support( s.attitude.inverse() * direction ));
 }
+
+Eigen::Vector3d BodyInstance::project(const Eigen::Vector3d& point, KindOfState k)
+{
+    BodyState& s = state(k);
+    Eigen::Vector3d A = s.WF2BF(point);
+    Eigen::Vector3d B = _model->project(A);
+    Eigen::Vector3d C = s.BF2WF(B);
+    return C;
+}
+
+bool BodyInstance::indicator(const Eigen::Vector3d& point, KindOfState k)
+{
+    return _model->indicator(state(k).WF2BF(point));
+}
+

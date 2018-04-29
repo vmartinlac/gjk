@@ -11,6 +11,13 @@ class BodyInstance
 {
 public:
 
+    enum KindOfState
+    {
+        InitialState = 0,
+        CurrentState = 1,
+        CollisionState = 2
+    };
+
     BodyInstance(std::shared_ptr<BodyModel> model);
 
     std::shared_ptr<BodyModel> getModel();
@@ -19,9 +26,10 @@ public:
 
     void syncRepresentation();
 
-    BodyState& initialState() { return _initialState; }
-    BodyState& currentState() { return _currentState; }
-    BodyState& collisionState() { return _collisionState; }
+    BodyState& state(KindOfState i) { return _states[i]; }
+    BodyState& initialState() { return state(InitialState); }
+    BodyState& currentState() { return state(CurrentState); }
+    BodyState& collisionState() { return state(CollisionState); }
 
     int getId() { return _id; }
     void setId(int id) { _id = id; }
@@ -36,14 +44,14 @@ public:
     void setFixed() { _moving = false; }
     bool isFixed() { return !_moving; }
 
-    Eigen::Vector3d support(const Eigen::Vector3d& direction);
+    Eigen::Vector3d support(const Eigen::Vector3d& direction, KindOfState k);
+    Eigen::Vector3d project(const Eigen::Vector3d& point, KindOfState k);
+    bool indicator(const Eigen::Vector3d& point, KindOfState k);
 
 protected:
 
     int _id;
-    BodyState _initialState;
-    BodyState _currentState;
-    BodyState _collisionState;
+    BodyState _states[3];
     bool _moving;
     std::shared_ptr<BodyModel> _model;
     osg::ref_ptr<osg::PositionAttitudeTransform> _representation;

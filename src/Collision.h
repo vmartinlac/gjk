@@ -19,13 +19,6 @@ public:
 
 protected:
 
-    void computeBoxBox();
-    void computeSphereSphere();
-    void computeSphereBox();
-    void computeGJK();
-
-protected:
-
     bool _exists;
     Eigen::Vector3d _point;
     Eigen::Matrix3d _frame;

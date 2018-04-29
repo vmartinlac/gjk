@@ -17,6 +17,9 @@ struct BodyState
 
     // angular momentum in world frame.
     Eigen::Vector3d angular_momentum;
+
+    Eigen::Vector3d BF2WF(const Eigen::Vector3d& x);
+    Eigen::Vector3d WF2BF(const Eigen::Vector3d& x);
 };
 
 inline BodyState::BodyState()
@@ -27,3 +30,12 @@ inline BodyState::BodyState()
     angular_momentum.setZero();
 }
 
+inline Eigen::Vector3d BodyState::BF2WF(const Eigen::Vector3d& x)
+{
+    return position + attitude * x;
+}
+
+inline Eigen::Vector3d BodyState::WF2BF(const Eigen::Vector3d& x)
+{
+    return attitude.inverse() * (x - position);
+}

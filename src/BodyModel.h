@@ -21,6 +21,8 @@ public:
     double getBoundingSphereRadius() { return _radius; }
 
     virtual Eigen::Vector3d support(const Eigen::Vector3d& direction) = 0;
+    virtual Eigen::Vector3d project(const Eigen::Vector3d& point) = 0;
+    virtual bool indicator(const Eigen::Vector3d& point) = 0;
 
     osg::Node* getRepresentation() { return _representation.get(); }
 
@@ -47,6 +49,8 @@ public:
     SphereBody(double radius, double density);
     SphereBody* asSphere() override;
     Eigen::Vector3d support(const Eigen::Vector3d& direction) override;
+    Eigen::Vector3d project(const Eigen::Vector3d& point) override;
+    bool indicator(const Eigen::Vector3d& point) override;
 
     double getRadius() { return _radius; }
     void setColor(double r, double g, double b);
@@ -65,6 +69,8 @@ public:
     BoxBody(const Eigen::Vector3d& size, double density);
     BoxBody* asBox() override;
     Eigen::Vector3d support(const Eigen::Vector3d& direction) override;
+    Eigen::Vector3d project(const Eigen::Vector3d& point) override;
+    bool indicator(const Eigen::Vector3d& point) override;
 
     Eigen::Vector3d getSize() { return _size; }
 

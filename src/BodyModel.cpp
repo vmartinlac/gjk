@@ -54,6 +54,25 @@ Eigen::Vector3d SphereBody::support(const Eigen::Vector3d& direction)
     return direction.normalized() * _radius;
 }
 
+bool SphereBody::indicator(const Eigen::Vector3d& point)
+{
+    return (point.norm() < _radius);
+}
+
+Eigen::Vector3d SphereBody::project(const Eigen::Vector3d& point)
+{
+    const double dist = point.norm();
+
+    if(dist > _radius)
+    {
+        return point * (_radius/dist);
+    }
+    else
+    {
+        return point;
+    }
+}
+
 void SphereBody::setColor(double r, double g, double b)
 {
     _shapedrawable->setColor(osg::Vec4(r, g, b, 1.0));
@@ -120,6 +139,32 @@ Eigen::Vector3d BoxBody::support(const Eigen::Vector3d& direction)
       {
          ret(i) = - 0.5*_size[i];
       }
+    }
+
+    return ret;
+}
+
+bool BoxBody::indicator(const Eigen::Vector3d& point)
+{
+    bool ret = true;
+
+    for(int i=0; i<3; i++)
+    {
+        ret = ret && ( std::fabs(point(i)) < 0.5*_size[i] );
+    }
+
+    return ret;
+}
+
+Eigen::Vector3d BoxBody::project(const Eigen::Vector3d& point)
+{
+    Eigen::Vector3d ret;
+
+    for(int i=0; i<3; i++)
+    {
+        ret(i) = point(i);
+        ret(i) = std::max(ret(i), -0.5*_size[i]);
+        ret(i) = std::min(ret(i), 0.5*_size[i]);
     }
 
     return ret;
