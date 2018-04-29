@@ -38,6 +38,10 @@ class gjk::Shape
 {
 public:
     virtual Vector<Dim> support(const Vector<Dim>& dir) const = 0;
+    /*
+    virtual Vector<Dim> project(const Vector<Dim>& pt) const  = 0;
+    virtual bool indicator(const Vector<Dim>& pt) const = 0;
+    */
 };
 
 template<int Dim>
@@ -55,22 +59,23 @@ template<int Dim>
 class gjk::Solver
 {
 public:
+    Solver();
+
+    void setEpsilon(double epsilon) { _epsilon = epsilon; }
+
     void run(const Shape<Dim>& shape, const Vector<Dim>& target);
     bool inside() { return _inside; }
     Vector<Dim> closest() { return _closest; }
 
     void run(const Shape<Dim>& shape1, const Shape<Dim>& shape2);
     bool collision() { return _inside; }
-    Vector<Dim> closest1() { return _closest1; }
-    Vector<Dim> closest2() { return _closest2; }
 
     bool hasConverged() { return _converged; }
     double distance() { return _distance; }
 protected:
+    double _epsilon;
     bool _converged;
     Vector<Dim> _closest;
-    Vector<Dim> _closest1;
-    Vector<Dim> _closest2;
     double _distance;
     bool _inside;
 };

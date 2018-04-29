@@ -25,5 +25,6 @@ protected:
 protected:
     std::shared_ptr<Shape> _shape;
     bool _inside;
+    double _distance;
     QPointF _closestPoints[2];
 };

@@ -23,5 +23,5 @@ protected:
 protected:
     std::shared_ptr<Shape> _shapes[2];
     bool _collision;
-    QPointF _closestPoints[2];
+    double _distance;
 };

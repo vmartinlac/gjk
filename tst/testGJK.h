@@ -16,4 +16,5 @@ private slots:
     void testShapePoint1();
     void testShapePoint2();
     void testShapePoint3();
+    void testShapeShape1();
 };

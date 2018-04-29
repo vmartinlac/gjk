@@ -230,7 +230,7 @@ void gjk::Solver<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>& target)
 
             std::cout << "GJK : max number of iterations reached !" << std::endl;
         }
-        else if( distance < 1.0e-5 || num_points == Dim+1 )
+        else if( distance < _epsilon || num_points == Dim+1 )
         {
             go_on = false;
             _converged = true;
@@ -240,7 +240,7 @@ void gjk::Solver<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>& target)
         {
             Vector<Dim> w = shape.support( direction );
 
-            if( (w - v).dot(direction)/distance  < 1.0e-5)
+            if( (w - v).dot(direction)/distance  < _epsilon)
             {
                 go_on = false;
                 _converged = true;
@@ -277,7 +277,7 @@ void gjk::Solver<Dim>::run(const Shape<Dim>& shape, const Vector<Dim>& target)
     if(_converged)
     {
         _distance = (target - v).norm();
-        _closest1 = v;
+        _closest = v;
     }
 }
 
@@ -290,15 +290,12 @@ void gjk::Solver<Dim>::run(const Shape<Dim>& shape1, const Shape<Dim>& shape2)
     target.setZero();
 
     run(shape, target);
+}
 
-    if(_converged)
-    {
-        // _distance and _inside are already set.
-
-        Vector<Dim> direction = _closest;
-        _closest1 = shape1.support(-direction);
-        _closest2 = shape2.support(direction);
-    }
+template<int Dim>
+gjk::Solver<Dim>::Solver()
+{
+    _epsilon = 1.0e-5;
 }
 
 template<int Dim>
@@ -316,9 +313,11 @@ gjk::Vector<Dim> gjk::MinkowskiDifference<Dim>::support(const Vector<Dim>& dir) 
 
 // instantiate templates.
 
+template gjk::Solver<2>::Solver();
 template void gjk::Solver<2>::run(const Shape<2>& shape1, const Vector<2>& target);
 template void gjk::Solver<2>::run(const Shape<2>& shape1, const Shape<2>& shape2);
 
+template gjk::Solver<3>::Solver();
 template void gjk::Solver<3>::run(const Shape<3>& shape1, const Vector<3>& target);
 template void gjk::Solver<3>::run(const Shape<3>& shape1, const Shape<3>& shape2);
 

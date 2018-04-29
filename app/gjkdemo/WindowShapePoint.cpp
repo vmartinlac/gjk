@@ -7,6 +7,7 @@
 
 WindowShapePoint::WindowShapePoint(QWidget* parent) : QWidget(parent)
 {
+    setFocusPolicy(Qt::StrongFocus);
     setWindowTitle("GJK demo");
     resize(640, 480);
     createCircle();
@@ -53,12 +54,15 @@ void WindowShapePoint::computeClosestPoints()
         _closestPoints[0].setY( target(1) );
         _closestPoints[1].setX( closest(0) );
         _closestPoints[1].setY( closest(1) );
+        _distance = solver.distance();
     }
 }
 
 void WindowShapePoint::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
+
+    painter.drawText(10, 10, "distance = " + QString::number(_distance));
 
     if(_inside)
     {

@@ -1,4 +1,5 @@
 #include <QtTest/QtTest>
+#include <chrono>
 #include <random>
 #include <iostream>
 #include "testGJK.h"
@@ -252,6 +253,38 @@ void testGJK::testShapePoint3()
         QVERIFY( ( solver.closest() - ref ).norm() < 1.0e-2 ); // TODO : smaller threshold.
         QVERIFY( solver.inside() == inside );
     }
+}
+
+void testGJK::testShapeShape1()
+{
+    TestBox s1;
+    s1.center << 2.0, 0.0;
+    s1.length << 2.0, 2.0;
+
+    TestSphere s2;
+    s2.C << -2.0, 0.0;
+    s2.R = 2.0;
+
+    std::chrono::time_point< std::chrono::system_clock > t0;
+    std::chrono::time_point< std::chrono::system_clock > t1;
+
+    t0 = std::chrono::system_clock::now();
+    int i = 0;
+    do
+    {
+        gjk::Solver<2> solver;
+        solver.run(s1, s2);
+
+        QVERIFY( solver.hasConverged() );
+
+        t1 = std::chrono::system_clock::now();
+        i++;
+    }
+    while( t1 - t0 < std::chrono::seconds(1) );
+
+    //const int delta = std::chrono::duration_cast< std::chrono::milliseconds >(t1 - t0);
+    int delta = std::chrono::duration_cast< std::chrono::milliseconds >(t1 - t0).count();
+    std::cout << "Number of collisions solved in 1 second : " << 1000.0*double(i) / double(delta) << std::endl;
 }
 
 QTEST_MAIN(testGJK)
