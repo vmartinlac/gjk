@@ -14,4 +14,5 @@ private slots:
     void testSubalgorithm6();
     void testSubalgorithm7();
     void testFindClosestPoint1();
+    void tmp();
 };

@@ -2,6 +2,7 @@
 #include <iostream>
 #include "testGJK.h"
 #include "GJK.h"
+#include "GJK2.h"
 
 void testGJK::testSubalgorithm1()
 {
@@ -173,6 +174,19 @@ void testGJK::testFindClosestPoint1()
 
     QVERIFY( ( closest - ref ).norm() < 1.0e-6 );
     QVERIFY( inside == false );
+}
+
+void testGJK::tmp()
+{
+    gjk2::Vector<3> target{0.0, 0.0, 0.0};
+    gjk2::Matrix<3,4> points;
+    points.col(0) << -1.0, 1.0, 0.0;
+    points.col(1) << 1.0, 1.0, 0.0;
+    int num_points = 2;
+    gjk2::Vector<3> closest;
+    bool ret = gjk2::subalgorithm(target, num_points, points, closest);
+    std::cout << "num_points = " << num_points << std::endl;
+    std::cout << closest << std::endl;
 }
 
 QTEST_MAIN(testGJK)

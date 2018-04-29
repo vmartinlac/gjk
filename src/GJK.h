@@ -206,7 +206,6 @@ bool gjk::findClosestPoint(const SupportFunction& support, const Vector<Dim>& ta
             }
 
             p = p_next;
-            std::cout << p.transpose() << std::endl;
         }
 
         //

@@ -6,7 +6,7 @@
 #include <QImage>
 #include <iostream>
 #include <algorithm>
-#include <eigen3/Eigen/Eigen>
+#include <Eigen/Eigen>
 
 namespace gjk2
 {
@@ -29,7 +29,11 @@ namespace gjk2
     class SolverShapeShape;
 
     template<int Dim>
-    class Subalgorithm;
+    bool subalgorithm(
+        const Vector<Dim>& target, // input
+        int& num_points, // input output
+        Matrix<Dim,Dim+1>& points, // input output
+        Vector<Dim>& closest); // output
 };
 
 template<int Dim>
@@ -84,10 +88,3 @@ protected:
     bool _collision;
 };
 
-template<int Dim>
-class gjk2::Subalgorithm
-{
-public:
-    bool run(int& num_points, Matrix<Dim,Dim+1>& points, Vector<Dim>& closest);
-protected:
-};
