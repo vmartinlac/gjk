@@ -27,6 +27,8 @@ void Cluster::process()
             }
         }
 
+        const BodyInstance::KindOfState kos = BodyInstance::CurrentState;
+
         std::map<int, int> body_gid_to_lid;
 
         int num_bodies = 0;
@@ -56,15 +58,15 @@ void Cluster::process()
 
             std::shared_ptr<BodyInstance> body = w->getBodies()[gid];
 
-            Eigen::Matrix3d R = body->collisionState().attitude.toRotationMatrix();
+            Eigen::Matrix3d R = body->state(kos).attitude.toRotationMatrix();
 
             A.block<3,3>(lid*6+0, lid*6+0) = body->getModel()->getMass() * Eigen::Matrix3d::Identity();
             A.block<3,3>(lid*6+3, lid*6+3) = R * body->getModel()->getInertiaTensor() * R.transpose();
 
             if(body->isMoving())
             {
-                B.segment<3>(lid*6+0) = body->collisionState().linear_momentum;
-                B.segment<3>(lid*6+3) = body->collisionState().angular_momentum;
+                B.segment<3>(lid*6+0) = body->state(kos).linear_momentum;
+                B.segment<3>(lid*6+3) = body->state(kos).angular_momentum;
             }
             else
             {
@@ -80,19 +82,22 @@ void Cluster::process()
             std::shared_ptr<BodyInstance> body1 = c.getBody1();
             std::shared_ptr<BodyInstance> body2 = c.getBody2();
 
+            BodyState& state1 = body1->state(kos);
+            BodyState& state2 = body2->state(kos);
+
             const int lid1 = body_gid_to_lid[body1->getId()];
             const int lid2 = body_gid_to_lid[body2->getId()];
 
             const Eigen::Vector3d collision_point = c.getCollisionPoint();
             const Eigen::Matrix3d collision_frame = c.getCollisionFrame();
 
-            Eigen::Matrix3d R1 = Utils::crossProductMatrix(collision_point - body1->collisionState().position);
-            Eigen::Matrix3d R2 = Utils::crossProductMatrix(collision_point - body2->collisionState().position);
+            Eigen::Matrix3d R1 = Utils::crossProductMatrix(collision_point - state1.position);
+            Eigen::Matrix3d R2 = Utils::crossProductMatrix(collision_point - state2.position);
 
-            Eigen::Vector3d V1 = body1->getLinearVelocityWF( body1->collisionState() );
-            Eigen::Vector3d V2 = body2->getLinearVelocityWF( body2->collisionState() );
-            Eigen::Vector3d omega1 = body1->getAngularVelocityWF( body1->collisionState() );
-            Eigen::Vector3d omega2 = body2->getAngularVelocityWF( body2->collisionState() );
+            Eigen::Vector3d V1 = body1->getLinearVelocityWF( state1 );
+            Eigen::Vector3d V2 = body2->getLinearVelocityWF( state2 );
+            Eigen::Vector3d omega1 = body1->getAngularVelocityWF( state1 );
+            Eigen::Vector3d omega2 = body2->getAngularVelocityWF( state2 );
 
             const int base = 6*num_bodies + 3*i;
 
@@ -103,7 +108,7 @@ void Cluster::process()
             A.block<3,3>(base, 6*lid2+3) = - collision_frame.transpose()*R2;
 
             B.segment<2>(base).setZero();
-            const double restitution = 0.3;
+            const double restitution = World::instance()->getRestitution();
             B(base+2) = - restitution * collision_frame.col(2).dot( V2 - R2*omega2 - V1 + R1*omega1 );
 
             if(body1->isMoving())

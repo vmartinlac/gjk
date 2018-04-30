@@ -298,23 +298,32 @@ void Solver::computeTimestep(const Eigen::VectorXd& X, double maxdt, double& dt,
 
     for( std::shared_ptr<BodyInstance>& body : World::instance()->getBodies() )
     {
-        const int id = body->getId();
-
-        BodyState state = extractIndividualState(X, id);
-
-        const Eigen::Vector3d linear_velocity = body->getLinearVelocityWF(state);
-        const Eigen::Vector3d angular_velocity = body->getAngularVelocityWF(state);
-
-        const double bs_radius = body->getModel()->getBoundingSphereRadius();
-        const double max_dist = bs_radius * 0.05;
-        const double dt1 = max_dist / linear_velocity.norm();
-        const double dt2 = max_dist / std::max(1.0e-5, angular_velocity.norm()*bs_radius);
-        const double dt3 = std::min(dt1, dt2);
-
-        if(dt3 < dt)
+        if( body->isMoving() )
         {
-            completed = false;
-            dt = dt3;
+            const int id = body->getId();
+
+            BodyState state = extractIndividualState(X, id);
+
+            const Eigen::Vector3d linear_velocity = body->getLinearVelocityWF(state);
+            const Eigen::Vector3d angular_velocity = body->getAngularVelocityWF(state);
+
+            const double bs_radius = body->getModel()->getBoundingSphereRadius();
+            const double max_dist = bs_radius * 0.05;
+            const double dt1 = max_dist / linear_velocity.norm();
+            const double dt2 = max_dist / std::max(1.0e-5, angular_velocity.norm()*bs_radius);
+            const double dt3 = std::min(dt1, dt2);
+            const double dt4 = 1.0e-3*_timestep/60.0;
+            const double dt5 = std::max( dt3, dt4 );
+            if(dt3 < dt4)
+            {
+                std::cout << "Warning : timestep will be larger than appropriate !" << std::endl;
+            }
+
+            if(dt5 < dt)
+            {
+                completed = false;
+                dt = dt5;
+            }
         }
     }
 }
@@ -381,9 +390,6 @@ void Solver::RK4Method(double maxdt, double& dt, bool& completed)
 void Solver::semiimplicitEulerMethod(double maxdt, double& dt, bool& completed)
 {
     const int num_bodies = World::instance()->numBodies();
-
-    completed = true;
-    dt = maxdt;
 
     Eigen::VectorXd X;
     retrieveCurrentState(X);

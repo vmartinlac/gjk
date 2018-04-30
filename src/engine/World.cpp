@@ -15,6 +15,8 @@ World::World()
     _gravity << 0.0, 0.0, -9.81;
     _linearViscosity = 0.0;
     _angularViscosity = 0.0;
+    _margin = 0.1;
+    _restitution = 0.3;
 }
 
 World::~World()

@@ -52,6 +52,12 @@ public:
     double getLinearViscosity() { return _linearViscosity; }
     double getAngularViscosity() { return _angularViscosity; }
 
+    double getMargin() { return _margin; }
+    void setMargin(double l) { _margin = l; }
+
+    double getRestitution() { return _restitution; }
+    void setRestitution(double e) { _restitution = e; }
+
 protected:
 
     static World* _instance;
@@ -60,6 +66,8 @@ protected:
     Eigen::Vector3d _gravity;
     double _linearViscosity;
     double _angularViscosity;
+    double _margin;
+    double _restitution;
     osg::ref_ptr<osg::Group> _representation;
     osg::ref_ptr<osg::Vec3dArray> _springEndPoints;
 };

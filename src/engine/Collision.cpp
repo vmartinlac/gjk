@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Collision.h"
-//#include "GJK.h"
+#include "World.h"
 #include "BodyModel.h"
 #include "Utils.h"
 #include "BodyCollisionEstimator.h"
@@ -17,7 +17,7 @@ bool Collision::compute(
         throw std::runtime_error("Trying to compute the collision of an object with itself indicates some bug in the program.");
     }
 
-    const double margin = 0.1;
+    const double margin = World::instance()->getMargin();
 
     const double distance_centres = (b2->collisionState().position - b1->collisionState().position).norm();
     const double threshold = b1->getModel()->getBoundingSphereRadius() + b2->getModel()->getBoundingSphereRadius() + margin;
@@ -31,10 +31,11 @@ bool Collision::compute(
         BodyCollisionEstimator solver;
         solver.run( _body1, _body2, BodyInstance::CollisionState );
 
-        if(solver.overlap() || solver.distance() < margin)
+        if(solver.hasConverged() && ( solver.overlap() || solver.distance() < margin ))
         {
             solver.run( _body1, _body2, BodyInstance::CurrentState );
             _point = 0.5 * (solver.closest1() + solver.closest2());
+            std::cout << "impact margin distance = " << solver.distance() << std::endl;
             _frame = Utils::completeFrame( solver.closest2() - solver.closest1() );
 
             _exists = true;

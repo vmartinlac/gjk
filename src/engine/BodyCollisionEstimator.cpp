@@ -3,7 +3,7 @@
 
 BodyCollisionEstimator::BodyCollisionEstimator()
 {
-    _epsilon = 1.0e-3;
+    _epsilon = 1.0e-4;
 }
 
 void BodyCollisionEstimator::run(
@@ -21,17 +21,17 @@ void BodyCollisionEstimator::run(
     pts[0] = bodies[0]->support(direction, k);
     pts[1] = bodies[1]->support(direction, k);
 
-    int max_iter = 100;
+    int max_iter = 1200;
     bool go_on = true;
 
     _converged = true;
 
-    std::cout << "DÉBUT CALCUL POINTS PROXIMAUX" << std::endl;
+    //std::cout << "DÉBUT CALCUL POINTS PROXIMAUX" << std::endl;
     while(go_on)
     {
         if(max_iter <= 0)
         {
-            std::cout << "Number of iterations exceeded !" << std::endl;
+            std::cout << "Computation of proximal points between convexes failed !" << std::endl;
             _converged = false;
             go_on = false;
         }
@@ -58,9 +58,11 @@ void BodyCollisionEstimator::run(
     _closest1 = pts[0];
     _closest2 = pts[1];
 
+    /*
     std::cout << "overlap = " << overlap() << std::endl;
     std::cout << "distance = " << distance() << std::endl;
     std::cout << "pt1 = " << pts[0].transpose() << std::endl;
     std::cout << "pt2 = " << pts[1].transpose() << std::endl;
     std::cout << "FIN CALCUL POINTS PROXIMAUX" << std::endl;
+    */
 }

@@ -1,2 +1,2 @@
-add_executable(enginedemo main.cpp)
+add_executable(enginedemo main.cpp Preset.cpp)
 target_link_libraries(enginedemo PUBLIC engine ui Qt5::Widgets Qt5::Gui)
