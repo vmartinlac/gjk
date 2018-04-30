@@ -4,4 +4,4 @@ add_executable(
     WindowShapePoint.cpp
     Shape.cpp
     main.cpp)
-target_link_libraries(gjkdemo PUBLIC engine Qt5::Widgets)
+target_link_libraries(gjkdemo PUBLIC gjk Qt5::Widgets)

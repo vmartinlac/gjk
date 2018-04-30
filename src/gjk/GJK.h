@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include <QPicture>
-#include <QPainter>
-#include <QImage>
 #include <iostream>
 #include <algorithm>
 #include <Eigen/Eigen>

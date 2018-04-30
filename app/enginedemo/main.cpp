@@ -1,4 +1,3 @@
-#include <QSurfaceFormat>
 #include <QApplication>
 #include "Solver.h"
 #include "World.h"

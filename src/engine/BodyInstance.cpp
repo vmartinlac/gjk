@@ -52,8 +52,8 @@ Eigen::Vector3d BodyInstance::getAngularVelocityBF(const BodyState& state)
 
 Eigen::Vector3d BodyInstance::support(const Eigen::Vector3d& direction, KindOfState k)
 {
-    BodyState& s = state(k);
-    return s.BF2WF( _model->support( s.attitude.inverse() * direction ));
+    BodyState& s = collisionState();
+    return s.position + s.attitude* getModel()->support( s.attitude.inverse() * direction );
 }
 
 Eigen::Vector3d BodyInstance::project(const Eigen::Vector3d& point, KindOfState k)

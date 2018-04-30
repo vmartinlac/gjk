@@ -3,80 +3,7 @@
 //#include "GJK.h"
 #include "BodyModel.h"
 #include "Utils.h"
-
-class Tmp
-{
-public:
-    Tmp();
-    void setEpsilon(double e) { _epsilon = e; }
-    void run( std::shared_ptr<BodyInstance> b1, std::shared_ptr<BodyInstance> b2, BodyInstance::KindOfState k );
-    bool hasConverged() { return _converged; }
-    Eigen::Vector3d closest1() { return _closest1; }
-    Eigen::Vector3d closest2() { return _closest2; }
-    bool distance() { return (_closest2 - _closest1).norm(); }
-    bool overlap() { return _overlap; }
-protected:
-    double _epsilon;
-    bool _converged;
-    Eigen::Vector3d _closest1;
-    Eigen::Vector3d _closest2;
-    bool _overlap;
-};
-
-Tmp::Tmp()
-{
-    _epsilon = 1.0e-3;
-}
-
-void Tmp::run(
-    std::shared_ptr<BodyInstance> b1,
-    std::shared_ptr<BodyInstance> b2,
-    BodyInstance::KindOfState k )
-{
-    const Eigen::Vector3d direction{1.0, 0.0, 0.0};
-
-    Eigen::Vector3d pt1 = b1->support(direction, k);
-    Eigen::Vector3d pt2 = b2->support(direction, k);
-
-    int max_iter = 100;
-    bool go_on = true;
-
-    _converged = true;
-
-    while(go_on)
-    {
-        if(max_iter <= 0)
-        {
-            std::cout << "Number of iterations exceeded !" << std::endl;
-            _converged = false;
-            go_on = false;
-        }
-        else
-        {
-            Eigen::Vector3d pt1_post = b1->project( pt2, k);
-            Eigen::Vector3d pt2_post = b2->project( pt1, k);
-
-            const double d1 = (pt1_post - pt1).norm();
-            const double d2 = (pt2_post - pt2).norm();
-
-            pt1 = pt1_post;
-            pt2 = pt2_post;
-
-            go_on = ( d1 > _epsilon || d2 > _epsilon );
-        }
-
-        max_iter--;
-    }
-
-    _overlap = b1->indicator(pt2, k) && b2->indicator(pt1, k);
-    _closest1 = pt1;
-    _closest2 = pt2;
-
-    std::cout << std::endl;
-    std::cout << b1->getId() << ' ' << b2->getId() << std::endl;
-    std::cout << (pt2 - pt1).transpose() << std::endl;
-    std::cout << _overlap << std::endl;
-}
+#include "BodyCollisionEstimator.h"
 
 bool Collision::compute(
     std::shared_ptr<BodyInstance> b1,
@@ -101,7 +28,7 @@ bool Collision::compute(
     }
     else
     {
-        Tmp solver;
+        BodyCollisionEstimator solver;
         solver.run( _body1, _body2, BodyInstance::CollisionState );
 
         if(solver.overlap() || solver.distance() < margin)
