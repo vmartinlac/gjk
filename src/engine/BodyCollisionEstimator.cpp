@@ -1,27 +1,19 @@
 #include <iostream>
 #include "BodyCollisionEstimator.h"
 
-BodyCollisionEstimator::BodyCollisionEstimator()
+BodyCollisionEstimatorSA::BodyCollisionEstimatorSA()
 {
     _epsilon = 1.0e-4;
 }
 
-void BodyCollisionEstimator::run(
+void BodyCollisionEstimatorSA::run(
     std::shared_ptr<BodyInstance> b1,
     std::shared_ptr<BodyInstance> b2,
     BodyInstance::KindOfState k )
 {
-    std::shared_ptr<BodyInstance> bodies[2];
-    bodies[0] = b1;
-    bodies[1] = b2;
+    Eigen::Vector3d X = b1->project(b1->state(k).position, k);
 
-    const Eigen::Vector3d direction{1.0, 0.0, 0.0};
-
-    Eigen::Vector3d pts[2];
-    pts[0] = bodies[0]->support(direction, k);
-    pts[1] = bodies[1]->support(direction, k);
-
-    int max_iter = 1200;
+    int max_iter = 2000;
     bool go_on = true;
 
     _converged = true;
@@ -37,29 +29,22 @@ void BodyCollisionEstimator::run(
         }
         else
         {
-            go_on = false;
+            const double theta = 0.5;
+            Eigen::Vector3d Y = b2->project( X, k );
+            Eigen::Vector3d X_post = (1.0-theta)*X + theta*b1->project( Y, k );
 
-            for(int i=0; i<2; i++)
-            {
-                const int j = (i+1)%2;
-                Eigen::Vector3d pt_post = bodies[j]->project( pts[i], k );
-                if( (pts[j] - pt_post).norm() > _epsilon )
-                {
-                    go_on = true;
-                }
-                pts[j] = pt_post;
-            }
+            go_on = (X_post - X).norm() > _epsilon;
+
+            X = X_post;
         }
 
         max_iter--;
     }
 
-    _overlap = bodies[0]->indicator(pts[1], k) && bodies[1]->indicator(pts[0], k);
-    _closest1 = pts[0];
-    _closest2 = pts[1];
+    _closest1 = X;
+    _closest2 = b2->project(X, k);
 
     /*
-    std::cout << "overlap = " << overlap() << std::endl;
     std::cout << "distance = " << distance() << std::endl;
     std::cout << "pt1 = " << pts[0].transpose() << std::endl;
     std::cout << "pt2 = " << pts[1].transpose() << std::endl;

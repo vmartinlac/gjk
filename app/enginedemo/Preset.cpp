@@ -69,7 +69,7 @@ public:
 
     void apply() override
     {
-        std::shared_ptr<BodyModel> m1(new BoxBody(Eigen::Vector3d{50.0, 50.0, 0.5}, CTE_WOOD_DENSITY)); 
+        std::shared_ptr<BodyModel> m1(new BoxBody(Eigen::Vector3d{60.0, 40.0, 0.5}, CTE_WOOD_DENSITY)); 
 
         std::shared_ptr<BodyModel> m2(new SphereBody(1.0, CTE_WOOD_DENSITY));
         m2->asSphere()->setColor(0.7, 0.1, 0.1);
@@ -129,7 +129,7 @@ public:
 
         const double L = 4.0; // distance between consecutive balls / free length of springs.
         Eigen::Vector3d dir{1.0, 0.0, 0.0}; // direction along which balls are aligned.
-        const int N = 6; // number of balls.
+        const int N = 4; // number of balls.
 
         std::shared_ptr<BodyInstance> sphere = std::make_shared<BodyInstance>(model);
         sphere->initialState().position << 2.0, 0.0, 2.0;
@@ -162,9 +162,11 @@ public:
 
         std::shared_ptr<BodyModel> model_ground(new BoxBody(Eigen::Vector3d{50.0, 50.0, 0.5}, CTE_WOOD_DENSITY)); 
         std::shared_ptr<BodyInstance> body_ground = std::make_shared<BodyInstance>(model_ground);
-        body_ground->initialState().position << 0.0, 0.0, -60.0;
+        body_ground->initialState().position << 0.0, 0.0, -40.0;
 
         world->addBody(body_ground);
+
+        world->setAngularViscosity(1000.0);
 
         world->build();
     }
@@ -261,6 +263,7 @@ bool choose_and_build_world()
     dlg->setWindowTitle("Physics Engine Demo");
 
     QObject::connect( btn, &QPushButton::clicked, dlg, &QDialog::accept);
+    QObject::connect( list, &QListWidget::itemDoubleClicked, dlg, &QDialog::accept);
 
     bool ret = false;
 

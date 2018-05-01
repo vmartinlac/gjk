@@ -28,10 +28,10 @@ bool Collision::compute(
     }
     else
     {
-        BodyCollisionEstimator solver;
+        BodyCollisionEstimatorSA solver;
         solver.run( _body1, _body2, BodyInstance::CollisionState );
 
-        if(solver.hasConverged() && ( solver.overlap() || solver.distance() < margin ))
+        if( solver.distance() < margin )
         {
             solver.run( _body1, _body2, BodyInstance::CurrentState );
             _point = 0.5 * (solver.closest1() + solver.closest2());

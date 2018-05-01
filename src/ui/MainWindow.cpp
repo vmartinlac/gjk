@@ -1,4 +1,5 @@
 #include <QMessageBox>
+#include <QKeySequence>
 #include <QApplication>
 #include <QToolBar>
 #include "Solver.h"
@@ -7,7 +8,6 @@
 
 MainWindow::MainWindow(QWidget* parent)
 {
-
     _viewer = new ViewerWidget(this);
     setCentralWidget(_viewer);
     resize(640, 480);
@@ -18,6 +18,10 @@ MainWindow::MainWindow(QWidget* parent)
     QAction* a_run = tb->addAction("Run");
     QAction* a_about = tb->addAction("About");
     QAction* a_quit = tb->addAction("Quit");
+
+    a_init->setShortcut(QKeySequence("Ctrl+I"));
+    a_run->setShortcut(QKeySequence("Ctrl+R"));
+    a_quit->setShortcut(QKeySequence("Ctrl+Q"));
 
     a_run->setCheckable(true);
 
