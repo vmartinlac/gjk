@@ -5,6 +5,7 @@
 
 class BoxBody;
 class SphereBody;
+class CylinderBody;
 
 class BodyModel
 {
@@ -17,6 +18,9 @@ public:
 
     virtual SphereBody* asSphere();
     bool isSphere() { return asSphere() != nullptr; }
+
+    virtual CylinderBody* asCylinder();
+    bool isCylinder() { return asCylinder() != nullptr; }
 
     double getBoundingSphereRadius() { return _radius; }
 
@@ -77,5 +81,20 @@ public:
 protected:
 
    Eigen::Vector3d _size;
+};
+
+class CylinderBody : public BodyModel
+{
+public:
+    CylinderBody(double height, double radius, double density);
+    CylinderBody* asCylinder() override;
+    Eigen::Vector3d support(const Eigen::Vector3d& direction) override;
+    Eigen::Vector3d project(const Eigen::Vector3d& point) override;
+    bool indicator(const Eigen::Vector3d& point) override;
+    double getRadius() { return _radius; }
+    double getHeight() { return _height; }
+protected:
+    double _height;
+    double _radius;
 };
 

@@ -14,6 +14,7 @@ BodyModel::BodyModel()
 SphereBody* BodyModel::asSphere() { return nullptr; }
 
 BoxBody* BodyModel::asBox() { return nullptr; }
+CylinderBody* BodyModel::asCylinder() { return nullptr; }
 
 // SphereBody
 
@@ -170,3 +171,92 @@ Eigen::Vector3d BoxBody::project(const Eigen::Vector3d& point)
     return ret;
 }
 
+// CylinderBody
+
+CylinderBody* CylinderBody::asCylinder()
+{
+    return this;
+}
+
+Eigen::Vector3d CylinderBody::project(const Eigen::Vector3d& point)
+{
+    Eigen::Vector3d ret;
+
+    const double rho = point.head<2>().norm();
+
+    if( rho > _radius )
+    {
+        ret.head<2>() = point.head<2>() * (_radius / rho);
+    }
+    else
+    {
+        ret.head<2>() = point.head<2>();
+    }
+
+    ret(2) = std::min(0.5*_height, std::max(-0.5*_height, point(2)));
+
+    return ret;
+}
+
+Eigen::Vector3d CylinderBody::support(const Eigen::Vector3d& direction)
+{
+    Eigen::Vector3d ret;
+
+    if( direction(2) > 0.0 )
+    {
+        ret(2) = 0.5*_height;
+    }
+    else
+    {
+        ret(2) = -0.5*_height;
+    }
+
+    //throw std::runtime_error("not implemented");
+    // TODO : what is direction.head<2>().norm() is zero ?
+    ret.head<2>() = direction.head<2>().normalized() * _radius;
+
+    return ret;
+}
+
+bool CylinderBody::indicator(const Eigen::Vector3d& point)
+{
+    bool inside = true;
+
+    inside = inside && ( -0.5*_height <= point(2) );
+    inside = inside && ( 0.5*_height >= point(2) );
+    inside = inside && ( point.head<2>().squaredNorm() < _radius*_radius );
+
+    return inside;
+}
+
+CylinderBody::CylinderBody(double height, double radius, double density) :
+    _radius(radius),
+    _height(height)
+{
+    // create representation.
+
+    osg::Cylinder* s = new osg::Cylinder( osg::Vec3d(0.0, 0.0, 0.0), radius, height);
+
+    osg::ShapeDrawable* sd = new osg::ShapeDrawable(s);
+
+    osg::Geode* g = new osg::Geode();
+    g->addDrawable(sd);
+
+    _representation = g;
+
+    // other stuff.
+
+    const double mass = density * M_PI * radius * radius * height;
+    const double cte1 = 0.25 * mass * (_radius*_radius + _height*_height/3.0);
+    const double cte2 = 0.50 * mass * _radius * _radius;
+    Eigen::Matrix3d inertia_tensor;
+    inertia_tensor <<
+        cte1, 0.0, 0.0,
+        0.0, cte1, 0.0,
+        0.0, 0.0, cte2;
+
+    BodyModel::_radius = radius;
+    _mass = mass;
+    _inertiaTensor = inertia_tensor;
+    _inertiaTensorSolver.compute(inertia_tensor);
+}

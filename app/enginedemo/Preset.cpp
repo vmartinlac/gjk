@@ -231,6 +231,98 @@ public:
 };
 */
 
+class Preset5 : public Preset
+{
+public:
+    const char* name() override
+    {
+        return "Cubes falling and bouncing.";
+    }
+
+    void apply() override
+    {
+        World* world = World::instance();
+
+        std::shared_ptr<BodyModel> model_cube = std::shared_ptr<BodyModel>(new BoxBody(
+            Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_WOOD_DENSITY));
+
+        std::shared_ptr<BodyModel> model_plate = std::shared_ptr<BodyModel>(new BoxBody(
+            Eigen::Vector3d{25.0, 15.0, 1.0}, CTE_WOOD_DENSITY));
+
+        std::shared_ptr<BodyInstance> cube1 = std::make_shared<BodyInstance>(model_cube);
+        cube1->setMoving();
+        cube1->initialState().position << 0.0, 0.0, 0.0;
+
+        std::shared_ptr<BodyInstance> cube2 = std::make_shared<BodyInstance>(model_cube);
+        cube2->setMoving();
+        cube2->initialState().position << 0.0, 0.0, 15.0;
+
+        std::shared_ptr<BodyInstance> plate1 = std::make_shared<BodyInstance>(model_plate);
+        plate1->initialState().position << 0.0, 0.0, -20.0;
+        plate1->initialState().attitude = Eigen::AngleAxisd( 0.2*M_PI, Eigen::Vector3d::UnitX());
+
+        std::shared_ptr<BodyInstance> plate2 = std::make_shared<BodyInstance>(model_plate);
+        plate2->initialState().position << 0.0, -15.0, -30.0;
+        plate2->initialState().attitude = Eigen::AngleAxisd( -0.2*M_PI, Eigen::Vector3d::UnitX());
+
+        std::shared_ptr<BodyInstance> plate3 = std::make_shared<BodyInstance>(model_plate);
+        plate3->initialState().position << 0.0, 0.0, -40.0;
+        plate3->initialState().attitude = Eigen::AngleAxisd( 0.3*M_PI, Eigen::Vector3d::UnitX());
+
+        world->addBody(cube1);
+        world->addBody(cube2);
+        world->addBody(plate1);
+        world->addBody(plate2);
+        world->addBody(plate3);
+
+        world->build();
+    }
+};
+
+class Preset6 : public Preset
+{
+public:
+    const char* name() override
+    {
+        return "Two spheres fall, bounce and collide.";
+    }
+
+    void apply() override
+    {
+        World* world = World::instance();
+
+        std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
+            1.0, CTE_WOOD_DENSITY));
+
+        std::shared_ptr<BodyModel> model_plate = std::shared_ptr<BodyModel>(new BoxBody(
+            Eigen::Vector3d{25.0, 15.0, 1.0}, CTE_WOOD_DENSITY));
+
+        std::shared_ptr<BodyInstance> ball1 = std::make_shared<BodyInstance>(model_ball);
+        ball1->setMoving();
+        ball1->initialState().position << 0.0, 0.0, 20.0;
+
+        std::shared_ptr<BodyInstance> ball2 = std::make_shared<BodyInstance>(model_ball);
+        ball2->setMoving();
+        ball2->initialState().position << 0.0, -20.0, 20.0;
+
+        std::shared_ptr<BodyInstance> plate1 = std::make_shared<BodyInstance>(model_plate);
+        plate1->initialState().position << 0.0, 0.0, -20.0;
+        plate1->initialState().attitude = Eigen::AngleAxisd( 0.1*M_PI, Eigen::Vector3d::UnitX());
+
+        std::shared_ptr<BodyInstance> plate2 = std::make_shared<BodyInstance>(model_plate);
+        plate2->initialState().position << 0.0, -20.0, -20.0;
+        plate2->initialState().attitude = Eigen::AngleAxisd( -0.1*M_PI, Eigen::Vector3d::UnitX());
+
+        world->addBody(ball1);
+        world->addBody(ball2);
+        world->addBody(plate1);
+        world->addBody(plate2);
+        world->setRestitution(0.55);
+
+        world->build();
+    }
+};
+
 bool choose_and_build_world()
 {
     std::vector< std::shared_ptr<Preset> > presets;
@@ -238,6 +330,8 @@ bool choose_and_build_world()
     presets.emplace_back(new Preset2());
     presets.emplace_back(new Preset3());
     //presets.emplace_back(new Preset4());
+    presets.emplace_back(new Preset5());
+    presets.emplace_back(new Preset6());
 
     QLabel* lbl = new QLabel("Which world do you want to build ?");
 
