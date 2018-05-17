@@ -323,6 +323,49 @@ public:
     }
 };
 
+class Preset7 : public Preset
+{
+public:
+    const char* name() override
+    {
+        return "Some balls";
+    }
+
+    void apply() override
+    {
+        World* world = World::instance();
+
+        std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
+            1.0, CTE_WOOD_DENSITY));
+
+        std::shared_ptr<BodyInstance> ball1 = std::make_shared<BodyInstance>(model_ball);
+        ball1->setMoving();
+        ball1->initialState().position << 0.0, 0.0, 0.0;
+        ball1->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
+
+        std::shared_ptr<BodyInstance> ball2 = std::make_shared<BodyInstance>(model_ball);
+        ball2->setMoving();
+        ball2->initialState().position << 20.0, 0.0, 0.0;
+
+        std::shared_ptr<BodyInstance> ball3 = std::make_shared<BodyInstance>(model_ball);
+        ball3->setMoving();
+        ball3->initialState().position << 0.0, 10.0, 0.0;
+        ball3->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
+
+        std::shared_ptr<BodyInstance> ball4 = std::make_shared<BodyInstance>(model_ball);
+        ball4->initialState().position << 20.0, 10.0, 0.0;
+
+        world->addBody(ball1);
+        world->addBody(ball2);
+        world->addBody(ball3);
+        world->addBody(ball4);
+        world->setRestitution(1.0);
+        world->setGravity(Eigen::Vector3d::Zero());
+
+        world->build();
+    }
+};
+
 bool choose_and_build_world()
 {
     std::vector< std::shared_ptr<Preset> > presets;
@@ -332,6 +375,7 @@ bool choose_and_build_world()
     //presets.emplace_back(new Preset4());
     presets.emplace_back(new Preset5());
     presets.emplace_back(new Preset6());
+    presets.emplace_back(new Preset7());
 
     QLabel* lbl = new QLabel("Which world do you want to build ?");
 

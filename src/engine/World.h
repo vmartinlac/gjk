@@ -3,7 +3,6 @@
 
 #include <osg/Group>
 #include <osg/Array>
-#include <QObject>
 #include <Eigen/Eigen>
 #include <vector>
 #include <memory>
@@ -11,14 +10,8 @@
 class BodyInstance;
 class Spring;
 
-class World : QObject
+class World
 {
-    Q_OBJECT
-
-public slots:
-
-    void syncRepresentation();
-
 public:
 
     typedef std::vector< std::shared_ptr<BodyInstance> > BodyList;
@@ -30,6 +23,8 @@ public:
     ~World();
 
     static World* instance() { return _instance; }
+
+    void syncRepresentation();
 
     void setGravity(const Eigen::Vector3d& g) { _gravity = g; }
     void setLinearViscosity(double v) { _linearViscosity = v; }

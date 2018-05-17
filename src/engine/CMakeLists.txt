@@ -12,7 +12,7 @@ add_library(
     Utils.cpp
     World.cpp)
 
-target_link_libraries(engine PUBLIC gjk Qt5::Core Boost::boost Eigen3::Eigen OpenSceneGraph)
+target_link_libraries(engine PUBLIC gjk Boost::boost Eigen3::Eigen OpenSceneGraph Qt5::Core)
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(
