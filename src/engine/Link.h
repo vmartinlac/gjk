@@ -58,8 +58,6 @@ public:
 
     Spring* asSpring() override { return this; }
 
-    // physical characteristics of the spring.
-
     double getFreeLength() { return _freeLength; }
     void setFreeLength(double value) { _freeLength = value; }
 
@@ -69,12 +67,36 @@ public:
     double getElasticityCoefficient() { return _elasticityCoefficient; }
     void setElasticityCoefficient(double value) { _elasticityCoefficient = value; }
 
-    // get or set the two bodies bound by the spring.
+    int getId() { return _id; }
+    void setId(int id) { _id = id; }
 
 protected:
 
     double _freeLength;
     double _elasticityCoefficient;
     double _dampingCoefficient;
+    int _id;
 };
 
+class Joint : public Link
+{
+public:
+
+    enum Type
+    {
+        SPHERICAL=0
+    };
+
+public:
+
+    Joint();
+
+    Joint* asJoint() override { return this; }
+
+    void setType(Type t) { _type = t; }
+    Type getType() { return _type; }
+
+protected:
+
+    Type _type;
+};

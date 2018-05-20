@@ -15,3 +15,7 @@ Spring::Spring()
     _dampingCoefficient = 0.0;
 }
 
+Joint::Joint()
+{
+    _type = SPHERICAL;
+}

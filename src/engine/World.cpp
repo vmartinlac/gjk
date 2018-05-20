@@ -32,6 +32,16 @@ std::shared_ptr<World> World::Builder::build()
         w._representation->addChild(body->getRepresentation());
     }
 
+    w._num_springs = 0;
+    for( std::shared_ptr<Link>& l : w._links )
+    {
+        if( l->isSpring() )
+        {
+            l->asSpring()->setId(w._num_springs);
+            w._num_springs++;
+        }
+    }
+
     /*
     // axes node.
 
@@ -58,34 +68,32 @@ std::shared_ptr<World> World::Builder::build()
 
     // springs node.
 
-    /*
-    if( numSprings() > 0 )
+    if( w._num_springs > 0 )
     {
-        _linkEndPoints = new osg::Vec3dArray(2*numSprings());
-        _linkEndPoints->setDataVariance(osg::Object::DYNAMIC);
+        w._springs_end_points = new osg::Vec3dArray(2*w._num_springs);
+        w._springs_end_points->setDataVariance(osg::Object::DYNAMIC);
         std::fill(
-            _linkEndPoints->begin(),
-            _springEndPoints->end(),
+            w._springs_end_points->begin(),
+            w._springs_end_points->end(),
             osg::Vec3d(0.0, 0.0, 0.0));
 
         osg::Vec3dArray* color_array = new osg::Vec3dArray;
         color_array->push_back( osg::Vec3d(0.2, 0.8, 0.2) );
 
         osg::Geometry* geom = new osg::Geometry;
-        geom->setVertexArray(_springEndPoints);
+        geom->setVertexArray(w._springs_end_points);
         geom->setColorArray(color_array);
         geom->setColorBinding(osg::Geometry::BIND_OVERALL);
         geom->setUseDisplayList(false);
         geom->setUseVertexBufferObjects(true);
-        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 2*numSprings()));
+        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 2*w._num_springs));
         geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(2.0));
 
         osg::Geode* geode = new osg::Geode;
         geode->addDrawable(geom);
 
-        _representation->addChild(geode);
+        w._representation->addChild(geode);
     }
-    */
 
     w.home();
     w.syncRepresentation();
@@ -167,23 +175,24 @@ void World::syncRepresentation()
         body->syncRepresentation();
     }
 
-    /*
-    if( numSprings() > 0 )
+    if( _num_springs > 0 )
     {
-        for(int i=0; i<numSprings(); i++)
+        for( std::shared_ptr<Link>& link : _links )
         {
-            std::shared_ptr<Spring>& spring = _springs[i];
+            if(link->isSpring())
+            {
+                const int id = link->asSpring()->getId();
 
-            const Eigen::Vector3d P1 = spring->getWorldFrameAnchor1();
-            const Eigen::Vector3d P2 = spring->getWorldFrameAnchor2();
+                const Eigen::Vector3d P1 = link->getAnchor1WF();
+                const Eigen::Vector3d P2 = link->getAnchor2WF();
 
-            (*_springEndPoints)[2*i+0] = osg::Vec3d(P1.x(), P1.y(), P1.z());
-            (*_springEndPoints)[2*i+1] = osg::Vec3d(P2.x(), P2.y(), P2.z());
+                (*_springs_end_points)[2*id+0] = osg::Vec3d(P1.x(), P1.y(), P1.z());
+                (*_springs_end_points)[2*id+1] = osg::Vec3d(P2.x(), P2.y(), P2.z());
+            }
         }
 
-        _springEndPoints->dirty();
+        _springs_end_points->dirty();
     }
-    */
 }
 
 void World::normalizeState(Eigen::VectorXd& X)
@@ -375,44 +384,57 @@ void World::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f)
         }
     }
 
-    /*
     for( std::shared_ptr<Link>& link : _links )
     {
-        std::shared_ptr<BodyInstance> B1 = spring->getBody1();
-        std::shared_ptr<BodyInstance> B2 = spring->getBody2();
-
-        const int id1 = B1->getId();
-        const int id2 = B2->getId();
-
-        BodyState S1 = extractIndividualState(X, id1);
-        BodyState S2 = extractIndividualState(X, id2);
-
-        const Eigen::Vector3d P1 = S1.position + S1.attitude * spring->getAnchor1();
-        const Eigen::Vector3d P2 = S2.position + S2.attitude * spring->getAnchor2();
-
-        const Eigen::Vector3d V1 = B1->getLinearVelocityWF(S1) + B1->getAngularVelocityWF(S1).cross( S1.attitude*spring->getAnchor1() );
-        const Eigen::Vector3d V2 = B2->getLinearVelocityWF(S2) + B2->getAngularVelocityWF(S2).cross( S2.attitude*spring->getAnchor2() );
-
-        const double L = (P2 - P1).norm();
-        const Eigen::Vector3d u = (P2 - P1)/L;
-        const double magnitude =
-            spring->getElasticityCoefficient() * (L - spring->getFreeLength()) / spring->getFreeLength()
-            + spring->getDampingCoefficient() * ( (V2 - V1).dot(u) );
-        const Eigen::Vector3d F = -u * magnitude;
-
-        if(B1->isMoving())
+        if( link->isSpring() )
         {
-            f.segment<3>(13*id1+7) -= F;
-            f.segment<3>(13*id1+10) -= (B1->currentState().attitude * spring->getAnchor1()).cross( F );
-        }
+            Spring* spring = link->asSpring();
 
-        if(B2->isMoving())
-        {
-            f.segment<3>(13*id2+7) += F;
-            f.segment<3>(13*id2+10) += (B2->currentState().attitude * spring->getAnchor2()).cross( F );
+            std::shared_ptr<BodyInstance> B1 = spring->getBody1();
+            std::shared_ptr<BodyInstance> B2 = spring->getBody2();
+
+            const int id1 = B1->getId();
+            const int id2 = B2->getId();
+
+            BodyState S1 = extractIndividualState(X, id1);
+            BodyState S2 = extractIndividualState(X, id2);
+
+            const Eigen::Vector3d P1 = S1.position + S1.attitude * spring->getAnchor1();
+            const Eigen::Vector3d P2 = S2.position + S2.attitude * spring->getAnchor2();
+
+            const Eigen::Vector3d V1 = B1->getLinearVelocityWF(S1) + B1->getAngularVelocityWF(S1).cross( S1.attitude*spring->getAnchor1() );
+            const Eigen::Vector3d V2 = B2->getLinearVelocityWF(S2) + B2->getAngularVelocityWF(S2).cross( S2.attitude*spring->getAnchor2() );
+
+            const double L = (P2 - P1).norm();
+            const Eigen::Vector3d u = (P2 - P1)/L;
+            const double magnitude =
+                spring->getElasticityCoefficient() * (L - spring->getFreeLength()) / spring->getFreeLength()
+                + spring->getDampingCoefficient() * ( (V2 - V1).dot(u) );
+            const Eigen::Vector3d F = -u * magnitude;
+
+            if(B1->isMoving())
+            {
+                f.segment<3>(13*id1+7) -= F;
+                f.segment<3>(13*id1+10) -= (B1->currentState().attitude * spring->getAnchor1()).cross( F );
+            }
+
+            if(B2->isMoving())
+            {
+                f.segment<3>(13*id2+7) += F;
+                f.segment<3>(13*id2+10) += (B2->currentState().attitude * spring->getAnchor2()).cross( F );
+            }
         }
     }
-    */
+
+    for( std::shared_ptr<Link>& link : _links )
+    {
+        if( link->isJoint() )
+        {
+            Joint* joint = link->asJoint();
+
+            ;
+        }
+    }
 }
 
 void World::step(double timestep)

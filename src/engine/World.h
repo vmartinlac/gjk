@@ -50,13 +50,14 @@ protected:
     std::vector< std::shared_ptr<Link> > _links;
     int _num_bodies;
     int _num_links;
+    int _num_springs;
     Eigen::Vector3d _gravity;
     double _linear_viscosity;
     double _angular_viscosity;
     double _margin;
     double _restitution;
     osg::ref_ptr<osg::Group> _representation;
-    //osg::ref_ptr<osg::Vec3dArray> _springs_end_points;
+    osg::ref_ptr<osg::Vec3dArray> _springs_end_points;
 };
 
 class World::Builder
