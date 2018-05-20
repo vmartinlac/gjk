@@ -6,63 +6,77 @@
 #include <Eigen/Eigen>
 #include <vector>
 #include <memory>
+#include "BodyState.h"
 
 class BodyInstance;
-class Spring;
+class Link;
 
 class World
 {
 public:
 
-    typedef std::vector< std::shared_ptr<BodyInstance> > BodyList;
-    typedef std::vector< std::shared_ptr<Spring> > SpringList;
+    class Builder;
 
-public:
-
-    World();
     ~World();
 
-    static World* instance() { return _instance; }
+    osg::ref_ptr<osg::Node> getRepresentation();
 
-    void syncRepresentation();
-
-    void setGravity(const Eigen::Vector3d& g) { _gravity = g; }
-    void setLinearViscosity(double v) { _linearViscosity = v; }
-    void setAngularViscosity(double v) { _angularViscosity = v; }
-
-    void addBody( std::shared_ptr<BodyInstance> body ) { _bodies.push_back(body); }
-    void addSpring( std::shared_ptr<Spring> spring ) { _springs.push_back(spring); }
-
-    void build();
-
-    osg::Node* getRepresentation() { return _representation.get(); }
-
-    int numBodies() { return (int) _bodies.size(); }
-    int numSprings() { return (int) _springs.size(); }
-
-    SpringList& getSprings() { return _springs; }
-    BodyList& getBodies() { return _bodies; }
-
-    Eigen::Vector3d getGravity() { return _gravity; }
-    double getLinearViscosity() { return _linearViscosity; }
-    double getAngularViscosity() { return _angularViscosity; }
-
-    double getMargin() { return _margin; }
-    void setMargin(double l) { _margin = l; }
-
-    double getRestitution() { return _restitution; }
-    void setRestitution(double e) { _restitution = e; }
+    void home();
+    void step(double dt);
 
 protected:
 
-    static World* _instance;
-    BodyList _bodies;
-    SpringList _springs;
+    World();
+    void syncRepresentation();
+
+    void integrate(
+        double mindt, // input : minimal dt
+        double maxdt, // input : maximal dt
+        double& dt, // output : effective dt
+        bool& completed); // output : (completed == true) <=> (dt == maxdt)
+
+    void retrieveCurrentState(Eigen::VectorXd& X);
+    void computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f);
+    void normalizeState(Eigen::VectorXd& X);
+    void applyState(const Eigen::VectorXd& X);
+    BodyState extractIndividualState(const Eigen::VectorXd& X, int id);
+    void computeTimestep(const Eigen::VectorXd& X, double mindt, double maxdt, double& dt, bool& completed);
+
+    void detectAndSolveCollisions();
+
+protected:
+
+    std::vector< std::shared_ptr<BodyInstance> > _bodies;
+    std::vector< std::shared_ptr<Link> > _links;
+    int _num_bodies;
+    int _num_links;
     Eigen::Vector3d _gravity;
-    double _linearViscosity;
-    double _angularViscosity;
+    double _linear_viscosity;
+    double _angular_viscosity;
     double _margin;
     double _restitution;
     osg::ref_ptr<osg::Group> _representation;
-    osg::ref_ptr<osg::Vec3dArray> _springEndPoints;
+    //osg::ref_ptr<osg::Vec3dArray> _springs_end_points;
+};
+
+class World::Builder
+{
+public:
+
+    Builder();
+
+    std::shared_ptr<World> build();
+
+    void setMargin(double l);
+    void setRestitution(double e);
+    void setGravity(const Eigen::Vector3d& g);
+    void setLinearViscosity(double v);
+    void setAngularViscosity(double v);
+
+    void addBody( std::shared_ptr<BodyInstance> body );
+    void addLink( std::shared_ptr<Link> link );
+
+protected:
+
+    std::shared_ptr<World> _world;
 };

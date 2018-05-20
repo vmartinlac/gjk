@@ -13,11 +13,14 @@
 
 #include "ViewerWidget.h"
 #include "World.h"
-#include "Solver.h"
 
-ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
+ViewerWidget::ViewerWidget(
+    std::shared_ptr<World> world,
+    QWidget* parent) :
+    QOpenGLWidget(parent),
+    _world(std::move(world))
 {
-    osg::ref_ptr<osg::Node> data = World::instance()->getRepresentation();
+    osg::ref_ptr<osg::Node> data = _world->getRepresentation();
 
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
 
@@ -37,8 +40,10 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QOpenGLWidget(parent)
 
 void ViewerWidget::timerEvent(QTimerEvent* ev)
 {
-   if(ev->timerId() == _updateTimer)
-      update();
+    if(ev->timerId() == _updateTimer)
+    {
+        update();
+    }
 }
 
 void ViewerWidget::paintGL()
@@ -123,6 +128,8 @@ bool ViewerWidget::event(QEvent* event)
         update();
         break;
     */
+    default:
+        break;
     };
 
     return handled;
@@ -141,18 +148,5 @@ void ViewerWidget::resizeGL(int width, int height)
 
    cameras.front()->setViewport( 0, 0, this->width(), this->height() );
    */
-}
-
-void ViewerWidget::init()
-{
-    Solver::instance()->home();
-    //_viewer->home();
-    update();
-}
-
-void ViewerWidget::frameReady()
-{
-    //Solver::instance()->syncRepresentation();
-    update();
 }
 

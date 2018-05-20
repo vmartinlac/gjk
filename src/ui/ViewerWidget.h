@@ -1,10 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <QOpenGLWidget>
-
 #include <osgViewer/Viewer>
 #include <osgViewer/GraphicsWindow>
 
+class World;
 class QMouseEvent;
 
 class ViewerWidget : public QOpenGLWidget
@@ -13,7 +14,7 @@ class ViewerWidget : public QOpenGLWidget
 
 public:
 
-    ViewerWidget(QWidget* parent=nullptr);
+    ViewerWidget( std::shared_ptr<World> world, QWidget* parent=nullptr );
 
 protected:
 
@@ -27,15 +28,11 @@ protected:
     void timerEvent(QTimerEvent* event) override;
     void initializeGL() override;
 
-public slots:
-
-    void init();
-    void frameReady();
-
 protected:
 
     osg::ref_ptr<osgViewer::Viewer> _viewer;
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> _window;
     int _updateTimer;
+    std::shared_ptr<World> _world;
 };
 

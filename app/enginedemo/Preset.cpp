@@ -10,14 +10,14 @@
 #include "BodyInstance.h"
 #include "BodyModel.h"
 #include "Preset.h"
-#include "Spring.h"
+#include "Link.h"
 #include "World.h"
 
 class Preset
 {
 public:
     virtual const char* name() = 0;
-    virtual void apply() = 0;
+    virtual std::shared_ptr<World> apply() = 0;
 };
 
 class Preset1 : public Preset
@@ -28,7 +28,7 @@ public:
         return "Three balls colliding";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
         std::shared_ptr<BodyModel> m(new SphereBody(1.0, CTE_WOOD_DENSITY));
         m->asSphere()->setColor(0.5, 0.8, 0.5);
@@ -48,14 +48,16 @@ public:
         b3->initialState().linear_momentum = Eigen::Vector3d{-5.0, 0.0, 0.0} * m->getMass();
         b3->setMoving();
 
-        World* w = World::instance();
-        w->setRestitution(1.0);
-        w->setMargin(0.05);
-        w->setGravity(Eigen::Vector3d::Zero());
-        w->addBody(b1);
-        w->addBody(b2);
-        w->addBody(b3);
-        w->build();
+        World::Builder builder;
+
+        builder.setRestitution(1.0);
+        builder.setMargin(0.05);
+        builder.setGravity(Eigen::Vector3d::Zero());
+        builder.addBody(b1);
+        builder.addBody(b2);
+        builder.addBody(b3);
+
+        return builder.build();
     }
 };
 
@@ -67,7 +69,7 @@ public:
         return "Collisions + pendulum";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
         std::shared_ptr<BodyModel> m1(new BoxBody(Eigen::Vector3d{60.0, 40.0, 0.5}, CTE_WOOD_DENSITY)); 
 
@@ -102,14 +104,16 @@ public:
         spring->setElasticityCoefficient(9.81*m2->getMass()/0.3);
         spring->setDampingCoefficient(9.81*m2->getMass()/0.3);
 
-        World* w = World::instance();
-        w->addBody(b1);
-        w->addBody(b2);
-        w->addBody(b3);
-        w->addBody(b4);
-        w->addBody(b5);
-        w->addSpring(spring);
-        w->build();
+        World::Builder b;
+
+        b.addBody(b1);
+        b.addBody(b2);
+        b.addBody(b3);
+        b.addBody(b4);
+        b.addBody(b5);
+        b.addLink(spring);
+
+        return b.build();
     }
 };
 
@@ -121,9 +125,9 @@ public:
         return "Collar";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
-        World* world = World::instance();
+        World::Builder b;
 
         std::shared_ptr<BodyModel> model = std::shared_ptr<BodyModel>(new SphereBody(1.0, CTE_WOOD_DENSITY));
 
@@ -134,7 +138,7 @@ public:
         std::shared_ptr<BodyInstance> sphere = std::make_shared<BodyInstance>(model);
         sphere->initialState().position << 2.0, 0.0, 2.0;
         sphere->setFixed();
-        world->addBody(sphere);
+        b.addBody(sphere);
 
         const double R = model->asSphere()->getRadius();
 
@@ -143,7 +147,7 @@ public:
             std::shared_ptr<BodyInstance> new_sphere = std::make_shared<BodyInstance>(model);
             new_sphere->setMoving();
             new_sphere->initialState().position = sphere->initialState().position + (L + 2*R) * dir;
-            world->addBody( new_sphere );
+            b.addBody( new_sphere );
 
             std::shared_ptr<Spring> spring = std::make_shared<Spring>();
             spring->setFreeLength(L);
@@ -153,7 +157,7 @@ public:
             spring->setBody2(new_sphere);
             spring->setAnchor1(R*dir);
             spring->setAnchor2(-R*dir);
-            world->addSpring( spring );
+            b.addLink( spring );
 
             sphere = new_sphere;
         }
@@ -164,11 +168,11 @@ public:
         std::shared_ptr<BodyInstance> body_ground = std::make_shared<BodyInstance>(model_ground);
         body_ground->initialState().position << 0.0, 0.0, -40.0;
 
-        world->addBody(body_ground);
+        b.addBody(body_ground);
 
-        world->setAngularViscosity(1000.0);
+        b.setAngularViscosity(1000.0);
 
-        world->build();
+        return b.build();
     }
 };
 
@@ -181,7 +185,7 @@ public:
         return "Perpetual movement";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
         World* world = World::instance();
 
@@ -239,10 +243,8 @@ public:
         return "Cubes falling and bouncing.";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
-        World* world = World::instance();
-
         std::shared_ptr<BodyModel> model_cube = std::shared_ptr<BodyModel>(new BoxBody(
             Eigen::Vector3d{2.0, 2.0, 2.0}, CTE_WOOD_DENSITY));
 
@@ -269,13 +271,15 @@ public:
         plate3->initialState().position << 0.0, 0.0, -40.0;
         plate3->initialState().attitude = Eigen::AngleAxisd( 0.3*M_PI, Eigen::Vector3d::UnitX());
 
-        world->addBody(cube1);
-        world->addBody(cube2);
-        world->addBody(plate1);
-        world->addBody(plate2);
-        world->addBody(plate3);
+        World::Builder b;
 
-        world->build();
+        b.addBody(cube1);
+        b.addBody(cube2);
+        b.addBody(plate1);
+        b.addBody(plate2);
+        b.addBody(plate3);
+
+        return b.build();
     }
 };
 
@@ -287,10 +291,8 @@ public:
         return "Two spheres fall, bounce and collide.";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
-        World* world = World::instance();
-
         std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
             1.0, CTE_WOOD_DENSITY));
 
@@ -313,13 +315,15 @@ public:
         plate2->initialState().position << 0.0, -20.0, -20.0;
         plate2->initialState().attitude = Eigen::AngleAxisd( -0.1*M_PI, Eigen::Vector3d::UnitX());
 
-        world->addBody(ball1);
-        world->addBody(ball2);
-        world->addBody(plate1);
-        world->addBody(plate2);
-        world->setRestitution(0.55);
+        World::Builder b;
 
-        world->build();
+        b.addBody(ball1);
+        b.addBody(ball2);
+        b.addBody(plate1);
+        b.addBody(plate2);
+        b.setRestitution(0.55);
+
+        return b.build();
     }
 };
 
@@ -331,10 +335,8 @@ public:
         return "Some balls";
     }
 
-    void apply() override
+    std::shared_ptr<World> apply() override
     {
-        World* world = World::instance();
-
         std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
             1.0, CTE_WOOD_DENSITY));
 
@@ -355,24 +357,25 @@ public:
         std::shared_ptr<BodyInstance> ball4 = std::make_shared<BodyInstance>(model_ball);
         ball4->initialState().position << 20.0, 10.0, 0.0;
 
-        world->addBody(ball1);
-        world->addBody(ball2);
-        world->addBody(ball3);
-        world->addBody(ball4);
-        world->setRestitution(1.0);
-        world->setGravity(Eigen::Vector3d::Zero());
+        World::Builder b;
 
-        world->build();
+        b.addBody(ball1);
+        b.addBody(ball2);
+        b.addBody(ball3);
+        b.addBody(ball4);
+        b.setRestitution(1.0);
+        b.setGravity(Eigen::Vector3d::Zero());
+
+        return b.build();
     }
 };
 
-bool choose_and_build_world()
+std::shared_ptr<World> choose_and_build_world()
 {
     std::vector< std::shared_ptr<Preset> > presets;
     presets.emplace_back(new Preset1());
     presets.emplace_back(new Preset2());
     presets.emplace_back(new Preset3());
-    //presets.emplace_back(new Preset4());
     presets.emplace_back(new Preset5());
     presets.emplace_back(new Preset6());
     presets.emplace_back(new Preset7());
@@ -403,15 +406,15 @@ bool choose_and_build_world()
     QObject::connect( btn, &QPushButton::clicked, dlg, &QDialog::accept);
     QObject::connect( list, &QListWidget::itemDoubleClicked, dlg, &QDialog::accept);
 
-    bool ret = false;
+    std::shared_ptr<World> ret;
 
     if( dlg->exec() == QDialog::Accepted )
     {
         const int i = list->currentItem()->data(Qt::UserRole).toInt();
+
         if( 0 <= i && i < presets.size() )
         {
-            ret = true;
-            presets[i]->apply();
+            ret = presets[i]->apply();
         }
     }
     

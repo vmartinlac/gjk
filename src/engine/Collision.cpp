@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "BodyCollisionEstimator.h"
 
+/*
 bool Collision::compute(
     std::shared_ptr<BodyInstance> b1,
     std::shared_ptr<BodyInstance> b2)
@@ -49,6 +50,7 @@ bool Collision::compute(
     return _exists;
 }
 
+*/
 /*
 void Collision::computeBoxBox()
 {

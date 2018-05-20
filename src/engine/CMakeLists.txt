@@ -7,12 +7,11 @@ add_library(
     Cluster.cpp
     Collision.cpp
     BodyCollisionEstimator.cpp
-    Solver.cpp
-    Spring.cpp
+    Link.cpp
     Utils.cpp
     World.cpp)
 
-target_link_libraries(engine PUBLIC gjk Boost::boost Eigen3::Eigen OpenSceneGraph Qt5::Core)
+target_link_libraries(engine PUBLIC gjk Boost::boost Eigen3::Eigen OpenSceneGraph)
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(

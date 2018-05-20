@@ -1,14 +1,20 @@
 #include <QMessageBox>
+#include <QTimer>
 #include <QKeySequence>
 #include <QApplication>
 #include <QToolBar>
-#include "Solver.h"
+#include "World.h"
 #include "MainWindow.h"
 #include "ViewerWidget.h"
 
-MainWindow::MainWindow(QWidget* parent)
+MainWindow::MainWindow(
+    std::shared_ptr<World> world,
+    QWidget* parent)
 {
-    _viewer = new ViewerWidget(this);
+    _world = world;
+    _viewer = new ViewerWidget(world, this);
+    _timer_simulation = new QTimer(this);
+
     setCentralWidget(_viewer);
     resize(640, 480);
     setWindowTitle("Rigid Body Simulation Demo");
@@ -25,10 +31,11 @@ MainWindow::MainWindow(QWidget* parent)
 
     a_run->setCheckable(true);
 
-    connect(a_init, SIGNAL(triggered()), _viewer, SLOT(init()));
+    connect(a_init, SIGNAL(triggered()), this, SLOT(initSimulation()));
     connect(a_about, SIGNAL(triggered()), this, SLOT(about()));
     connect(a_run, SIGNAL(toggled(bool)), this, SLOT(runSimulation(bool)));
     connect(a_quit, SIGNAL(triggered()), QApplication::instance(), SLOT(quit()));
+    connect(_timer_simulation, SIGNAL(timeout()), this, SLOT(simulationStep()));
 }
 
 void MainWindow::about()
@@ -38,13 +45,23 @@ void MainWindow::about()
 
 void MainWindow::runSimulation(bool run)
 {
-   if(run)
-   {
-      Solver::instance()->startSimulation();
-   }
-   else
-   {
-      Solver::instance()->stopSimulation();
-   }
+    if(run)
+    {
+        _timer_simulation->start(1000/60);
+    }
+    else
+    {
+        _timer_simulation->stop();
+    }
+}
+
+void MainWindow::simulationStep()
+{
+    _world->step( double(_timer_simulation->interval())*1.0e-3 );
+}
+
+void MainWindow::initSimulation()
+{
+    _world->home();
 }
 

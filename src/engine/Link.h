@@ -4,16 +4,17 @@
 #include <Eigen/Eigen>
 #include "BodyInstance.h"
 
-/*
-
 class Joint;
 class Spring;
 
 class Link
 {
 public:
+
+    Link();
+
     bool isJoint() { return asJoint() != nullptr; }
-    bool isSpring() { return asSpring() != nullptr; }
+    bool isSpring() { return asSpring() != nullptr; }
 
     virtual Joint* asJoint() { return nullptr; }
     virtual Spring* asSpring() { return nullptr; }
@@ -25,27 +26,18 @@ public:
     void setBody2(std::shared_ptr<BodyInstance> b) { _body2 = b; }
 
     const Eigen::Vector3d& getAnchor1() const { return _anchor1; }
-    Eigen::Vector3d getAnchor1() const { return _anchor1; }
-
     const Eigen::Vector3d& getAnchor2() const { return _anchor2; }
-    Eigen::Vector3d getAnchor2() const { return _anchor2; }
 
     const Eigen::Matrix3d& getFrame1() const { return _frame1; }
-    Eigen::Matrix3d getFrame1() const { return _frame1; }
-
     const Eigen::Matrix3d& getFrame2() const { return _frame1; }
-    Eigen::Matrix3d getFrame2() const { return _frame1; }
 
     void setAnchor1(const Eigen::Vector3d& a) { _anchor1 = a; }
-
     void setAnchor2(const Eigen::Vector3d& a) { _anchor2 = a; }
 
     void setFrame1(const Eigen::Matrix3d& m) { _frame1 = m; }
-
     void setFrame2(const Eigen::Matrix3d& m) { _frame2 = m; }
 
     Eigen::Vector3d getAnchor1WF() { return _body1->currentState().position + _body1->currentState().attitude * _anchor1; }
-
     Eigen::Vector3d getAnchor2WF() { return _body2->currentState().position + _body2->currentState().attitude * _anchor2; }
 
 protected:
@@ -86,4 +78,3 @@ protected:
     double _dampingCoefficient;
 };
 
-*/
