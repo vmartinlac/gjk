@@ -47,7 +47,19 @@ Eigen::Vector3d BodyInstance::getAngularVelocityWF(const BodyState& state)
 
 Eigen::Vector3d BodyInstance::getAngularVelocityBF(const BodyState& state)
 {
-    return _model->getInertiaTensorSolver().solve( state.attitude.inverse() * state.angular_momentum );
+    return _model->getInverseOfInertiaTensor() * ( state.attitude.inverse() * state.angular_momentum );
+}
+
+Eigen::Matrix3d BodyInstance::getInertiaTensorWF(const BodyState& state)
+{
+    Eigen::Matrix3d R = state.attitude.toRotationMatrix();
+    return R * _model->getInertiaTensor() * R.transpose();
+}
+
+Eigen::Matrix3d BodyInstance::getInverseOfInertiaTensorWF(const BodyState& state)
+{
+    Eigen::Matrix3d R = state.attitude.toRotationMatrix();
+    return R * _model->getInverseOfInertiaTensor() * R.transpose();
 }
 
 Eigen::Vector3d BodyInstance::support(const Eigen::Vector3d& direction, KindOfState k)

@@ -38,6 +38,8 @@ public:
     Eigen::Vector3d getLinearVelocityBF(const BodyState& state);
     Eigen::Vector3d getAngularVelocityWF(const BodyState& state);
     Eigen::Vector3d getAngularVelocityBF(const BodyState& state);
+    Eigen::Matrix3d getInertiaTensorWF(const BodyState& state);
+    Eigen::Matrix3d getInverseOfInertiaTensorWF(const BodyState& state);
 
     void setMoving() { _moving = true; }
     bool isMoving() { return _moving; }

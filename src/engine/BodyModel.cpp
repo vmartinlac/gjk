@@ -8,13 +8,21 @@ BodyModel::BodyModel()
     _radius = 1.0;
     _mass = 1.0;
     _inertiaTensor.setIdentity();
-    _inertiaTensorSolver.compute(_inertiaTensor);
+    updateInverseOfInertiaTensor();
 }
 
 SphereBody* BodyModel::asSphere() { return nullptr; }
 
 BoxBody* BodyModel::asBox() { return nullptr; }
 CylinderBody* BodyModel::asCylinder() { return nullptr; }
+
+void BodyModel::updateInverseOfInertiaTensor()
+{
+    Eigen::FullPivLU< Eigen::Matrix3d > solver;
+    solver.compute( _inertiaTensor );
+    if(solver.isInvertible() == false) throw std::runtime_error("non invertible inertia tensor");
+    _inverseOfinertiaTensor = solver.inverse();
+}
 
 // SphereBody
 
@@ -47,7 +55,7 @@ SphereBody::SphereBody(double radius, double density) :
     BodyModel::_radius = radius;
     _mass = mass;
     _inertiaTensor = inertia_tensor;
-    _inertiaTensorSolver.compute(inertia_tensor);
+    updateInverseOfInertiaTensor();
 }
 
 Eigen::Vector3d SphereBody::support(const Eigen::Vector3d& direction)
@@ -123,7 +131,7 @@ BoxBody::BoxBody(const Eigen::Vector3d& size, double density) :
     _radius = 0.5 * _size.norm();
     _mass = mass;
     _inertiaTensor = inertia_tensor;
-    _inertiaTensorSolver.compute(inertia_tensor);
+    updateInverseOfInertiaTensor();
 }
 
 Eigen::Vector3d BoxBody::support(const Eigen::Vector3d& direction)
@@ -258,5 +266,5 @@ CylinderBody::CylinderBody(double height, double radius, double density) :
     BodyModel::_radius = radius;
     _mass = mass;
     _inertiaTensor = inertia_tensor;
-    _inertiaTensorSolver.compute(inertia_tensor);
+    updateInverseOfInertiaTensor();
 }

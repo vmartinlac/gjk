@@ -29,7 +29,13 @@ protected:
     World();
     void syncRepresentation();
 
-    void integrate(
+    void integrate_explicit_euler(
+        double mindt, // input : minimal dt
+        double maxdt, // input : maximal dt
+        double& dt, // output : effective dt
+        bool& completed); // output : (completed == true) <=> (dt == maxdt)
+
+    void integrate_semiimplicit_euler(
         double mindt, // input : minimal dt
         double maxdt, // input : maximal dt
         double& dt, // output : effective dt

@@ -34,14 +34,18 @@ public:
 
     const Eigen::Matrix3d& getInertiaTensor() { return _inertiaTensor; }
 
-    const Eigen::LDLT< Eigen::Matrix3d >& getInertiaTensorSolver() { return _inertiaTensorSolver; }
+    const Eigen::Matrix3d& getInverseOfInertiaTensor() { return _inverseOfinertiaTensor; }
+
+protected:
+
+    void updateInverseOfInertiaTensor();
 
 protected:
 
     double _radius;
     double _mass;
     Eigen::Matrix3d _inertiaTensor;
-    Eigen::LDLT< Eigen::Matrix3d > _inertiaTensorSolver;
+    Eigen::Matrix3d _inverseOfinertiaTensor;
     osg::ref_ptr<osg::Node> _representation;
 };
 

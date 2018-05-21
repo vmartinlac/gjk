@@ -149,7 +149,7 @@ public:
             new_sphere->initialState().position = sphere->initialState().position + (L + 2*R) * dir;
             b.addBody( new_sphere );
 
-            std::shared_ptr<Spring> spring = std::make_shared<Spring>();
+            Spring* spring = new Spring();
             spring->setFreeLength(L);
             spring->setDampingCoefficient(9.81*model->getMass()*1.0);
             spring->setElasticityCoefficient( model->getMass()*9.81/0.3 );
@@ -157,7 +157,7 @@ public:
             spring->setBody2(new_sphere);
             spring->setAnchor1(R*dir);
             spring->setAnchor2(-R*dir);
-            b.addLink( spring );
+            b.addLink( std::shared_ptr<Link>(spring) );
 
             sphere = new_sphere;
         }
@@ -176,64 +176,48 @@ public:
     }
 };
 
-/*
 class Preset4 : public Preset
 {
 public:
     const char* name() override
     {
-        return "Perpetual movement";
+        return "Some balls";
     }
 
     std::shared_ptr<World> apply() override
     {
-        World* world = World::instance();
+        std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
+            1.0, CTE_WOOD_DENSITY));
 
-        std::shared_ptr<BodyModel> model_sphere = std::shared_ptr<BodyModel>(new SphereBody(0.5, CTE_WOOD_DENSITY));
+        std::shared_ptr<BodyInstance> ball1 = std::make_shared<BodyInstance>(model_ball);
+        ball1->setMoving();
+        ball1->initialState().position << 0.0, 0.0, 0.0;
+        ball1->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
 
-        std::shared_ptr<BodyInstance> P1 = std::make_shared<BodyInstance>(model_sphere);
-        std::shared_ptr<BodyInstance> P2 = std::make_shared<BodyInstance>(model_sphere);
-        std::shared_ptr<BodyInstance> P3 = std::make_shared<BodyInstance>(model_sphere);
-        P1->initialState().position << -3.0, -5.0, 0.0;
-        P2->initialState().position << 3.0, -5.0, 0.0;
-        P3->initialState().position << 0.0, 5.0, 0.0;
+        std::shared_ptr<BodyInstance> ball2 = std::make_shared<BodyInstance>(model_ball);
+        ball2->setMoving();
+        ball2->initialState().position << 20.0, 0.0, 0.0;
 
-        world->addBody(P1);
-        world->addBody(P2);
-        world->addBody(P3);
+        std::shared_ptr<BodyInstance> ball3 = std::make_shared<BodyInstance>(model_ball);
+        ball3->setMoving();
+        ball3->initialState().position << 0.0, 10.0, 0.0;
+        ball3->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
 
-        std::shared_ptr<BodyModel> model_box = std::shared_ptr<BoxBody>(new BoxBody(Eigen::Vector3d{3.0, 0.5, 9.0}, CTE_WOOD_DENSITY));
+        std::shared_ptr<BodyInstance> ball4 = std::make_shared<BodyInstance>(model_ball);
+        ball4->initialState().position << 20.0, 10.0, 0.0;
 
-        std::shared_ptr<BodyInstance> D1 = std::make_shared<BodyInstance>(model_box);
-        D1->initialState().position << 0.0, -5.0, 6.5;
-        D1->setMoving();
+        World::Builder b;
 
-        world->addBody(D1);
+        b.addBody(ball1);
+        b.addBody(ball2);
+        b.addBody(ball3);
+        b.addBody(ball4);
+        b.setRestitution(1.0);
+        b.setGravity(Eigen::Vector3d::Zero());
 
-        std::shared_ptr<Spring> S1 = std::make_shared<Spring>();
-        S1->setFreeLength(0);
-        //S1->setDampingCoefficient(9.81*model_box->getMass()*1.0);
-        S1->setElasticityCoefficient( 0.0*model_box->getMass()*9.81/0.3 );
-        S1->setBody1(P1);
-        S1->setBody2(D1);
-        S1->setAnchor1(Eigen::Vector3d::Zero());
-        S1->setAnchor2(Eigen::Vector3d{-1.5, 0.0, -4.5});
-        world->addSpring( S1 );
-
-        std::shared_ptr<Spring> S2 = std::make_shared<Spring>();
-        S2->setFreeLength(0);
-        //S2->setDampingCoefficient(9.81*model_box->getMass()*1.0);
-        S2->setElasticityCoefficient( 0.0*model_box->getMass()*9.81/0.3 );
-        S2->setBody1(P2);
-        S2->setBody2(D1);
-        S2->setAnchor1(Eigen::Vector3d::Zero());
-        S2->setAnchor2(Eigen::Vector3d{1.5, 0.0, -4.5});
-        world->addSpring( S2 );
-
-        world->build();
+        return b.build();
     }
 };
-*/
 
 class Preset5 : public Preset
 {
@@ -332,39 +316,50 @@ class Preset7 : public Preset
 public:
     const char* name() override
     {
-        return "Some balls";
+        return "Joints";
     }
 
     std::shared_ptr<World> apply() override
     {
-        std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(
-            1.0, CTE_WOOD_DENSITY));
+        std::shared_ptr<BodyModel> model_ball = std::shared_ptr<BodyModel>(new SphereBody(1.0, CTE_WOOD_DENSITY));
+
+        /*
+        std::shared_ptr<BodyInstance> ball0 = std::make_shared<BodyInstance>(model_ball);
+        ball0->initialState().position << -4.0, 0.0, 0.0;
+        */
 
         std::shared_ptr<BodyInstance> ball1 = std::make_shared<BodyInstance>(model_ball);
-        ball1->setMoving();
+        //ball1->setMoving();
         ball1->initialState().position << 0.0, 0.0, 0.0;
-        ball1->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
 
         std::shared_ptr<BodyInstance> ball2 = std::make_shared<BodyInstance>(model_ball);
         ball2->setMoving();
-        ball2->initialState().position << 20.0, 0.0, 0.0;
+        ball2->initialState().position << 2.0, 0.0, 0.0;
 
-        std::shared_ptr<BodyInstance> ball3 = std::make_shared<BodyInstance>(model_ball);
-        ball3->setMoving();
-        ball3->initialState().position << 0.0, 10.0, 0.0;
-        ball3->initialState().linear_momentum = Eigen::Vector3d{9.0, 0.0, 0.0} * model_ball->getMass();
+        std::shared_ptr<Link> joint = std::shared_ptr<Link>(new Joint);
+        joint->setBody1(ball1);
+        joint->setBody2(ball2);
+        joint->setAnchor1(Eigen::Vector3d{1.0, 0.0, 0.0});
+        joint->setAnchor2(Eigen::Vector3d{-1.0, 0.0, 0.0});
 
-        std::shared_ptr<BodyInstance> ball4 = std::make_shared<BodyInstance>(model_ball);
-        ball4->initialState().position << 20.0, 10.0, 0.0;
+        /*
+        std::shared_ptr<Link> spring = std::shared_ptr<Link>(new Spring);
+        spring->setBody1(ball0);
+        spring->setBody2(ball1);
+        spring->setAnchor1(Eigen::Vector3d{1.0, 0.0, 0.0});
+        spring->setAnchor2(Eigen::Vector3d{-1.0, 0.0, 0.0});
+        spring->asSpring()->setFreeLength(2.0);
+        spring->asSpring()->setDampingCoefficient(9.81*model_ball->getMass()*1.0);
+        spring->asSpring()->setElasticityCoefficient( model_ball->getMass()*9.81/1.0 );
+        */
 
         World::Builder b;
 
+        //b.addBody(ball0);
         b.addBody(ball1);
         b.addBody(ball2);
-        b.addBody(ball3);
-        b.addBody(ball4);
-        b.setRestitution(1.0);
-        b.setGravity(Eigen::Vector3d::Zero());
+        b.addLink(joint);
+        //b.addLink(spring);
 
         return b.build();
     }
@@ -376,6 +371,7 @@ std::shared_ptr<World> choose_and_build_world()
     presets.emplace_back(new Preset1());
     presets.emplace_back(new Preset2());
     presets.emplace_back(new Preset3());
+    presets.emplace_back(new Preset4());
     presets.emplace_back(new Preset5());
     presets.emplace_back(new Preset6());
     presets.emplace_back(new Preset7());
