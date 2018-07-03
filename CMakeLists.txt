@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt5 COMPONENTS Core Widgets Gui  OpenGL Test REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(Boost 1.60.0 REQUIRED)# COMPONENTS math_tr1 random program_options)
+find_package(jsoncpp REQUIRED)
 #find_package(OpenMP REQUIRED)
 
 find_package(OpenSceneGraph COMPONENTS osg osgGA osgViewer osgDB REQUIRED)

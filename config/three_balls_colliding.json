@@ -1,0 +1,34 @@
+{
+    "gravity":[0.0, 0.0, 0.0],
+    "margin":0.05,
+    "restitution_coefficient":1.0,
+    "body_models":[
+        {
+            "name":"m_ball",
+            "type":"sphere",
+            "radius":1.0,
+            "density":"wood"
+        }
+    ],
+    "body_instances":[
+        {
+            "name":"B1",
+            "model":"m_ball",
+            "position":[-10.0, 0.0, 1.6],
+            "linear_velocity":[5.0, 0.0, 0.0]
+        },
+        {
+            "name":"B2",
+            "model":"m_ball",
+            "position":[-10.0, 0.0, -1.6],
+            "linear_velocity":[5.0, 0.0, 0.0]
+        },
+        {
+            "name":"B3",
+            "model":"m_ball",
+            "position":[10.0, 0.0, 0.0],
+            "linear_velocity":[-5.0, 0.0, 0.0]
+        }
+    ]
+}
+

@@ -274,6 +274,7 @@ void World::integrate_explicit_euler(double mindt, double maxdt, double& dt, boo
     normalizeState(X);
 
     applyState(X);
+    //std::cout << b->currentState().position << std::endl;
 }
 
 void World::integrate_semiimplicit_euler(double mindt, double maxdt, double& dt, bool& completed)
@@ -443,73 +444,6 @@ void World::computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f)
             }
         }
     }
-
-    for( std::shared_ptr<Link>& link : _links )
-    {
-        if( link->isJoint() )
-        {
-            Joint* joint = link->asJoint();
-
-            if( joint->getType() == Joint::SPHERICAL )
-            {
-                std::shared_ptr<BodyInstance> body1 = joint->getBody1();
-                std::shared_ptr<BodyInstance> body2 = joint->getBody2();
-
-                const int id1 = body1->getId();
-                const int id2 = body2->getId();
-
-                // rotation matrix from body frame to world frame.
-                const Eigen::Matrix3d R1 = body1->currentState().attitude.toRotationMatrix();
-                const Eigen::Matrix3d R2 = body2->currentState().attitude.toRotationMatrix();
-
-                // inverse of inertia matrix in world frame.
-                const Eigen::Matrix3d II1 = body1->getInverseOfInertiaTensorWF( body1->currentState() );
-                const Eigen::Matrix3d II2 = body2->getInverseOfInertiaTensorWF( body2->currentState() );
-
-                // cross-product matrix of (body origin to anchor point) in world frame.
-                const Eigen::Matrix3d X1 = Utils::crossProductMatrix( R1 * link->getAnchor1() );
-                const Eigen::Matrix3d X2 = Utils::crossProductMatrix( R2 * link->getAnchor2() );
-
-                // angular velocity in world frame.
-                const Eigen::Vector3d omega1 = body1->getAngularVelocityWF( body1->currentState() );
-                const Eigen::Vector3d omega2 = body2->getAngularVelocityWF( body2->currentState() );
-
-                // resultant force before joint in world frame.
-                const Eigen::Vector3d F1 = f.segment<3>(13*id1+7);
-                const Eigen::Vector3d F2 = f.segment<3>(13*id2+7);
-
-                // resultant moment in world frame.
-                const Eigen::Vector3d T1 = f.segment<3>(13*id1+10);
-                const Eigen::Vector3d T2 = f.segment<3>(13*id2+10);
-
-                // angular momentum in world frame.
-                const Eigen::Vector3d H1 = X.segment<3>(13*id1+10);
-                const Eigen::Vector3d H2 = X.segment<3>(13*id2+10);
-
-                const Eigen::Matrix3d A1 = Eigen::Matrix3d::Identity() / body1->getModel()->getMass() + X1.transpose() * II1 * X1;
-                const Eigen::Matrix3d A2 = Eigen::Matrix3d::Identity() / body2->getModel()->getMass() + X2.transpose() * II2 * X2;
-
-                const Eigen::Vector3d B1 = F1/body1->getModel()->getMass() - X1 * (II1*(T1 + H1.cross(omega1))) - omega1.cross(X1*omega1);
-                const Eigen::Vector3d B2 = F2/body2->getModel()->getMass() - X2 * (II2*(T2 + H2.cross(omega2))) - omega2.cross(X2*omega2);
-
-                Eigen::FullPivLU< Eigen::Matrix3d > solver;
-                solver.compute(A1+A2);
-
-                if(solver.isInvertible() == false) std::cout << "non invertible matrix encountered computing joints" << std::endl;
-
-                Eigen::Vector3d Fc = solver.solve(B2-B1);
-
-                f.segment<3>(13*id1+7) += Fc;
-                f.segment<3>(13*id2+7) -= Fc;
-                f.segment<3>(13*id1+10) += X1*Fc;
-                f.segment<3>(13*id2+10) -= X2*Fc;
-            }
-            else
-            {
-                throw std::runtime_error("Unknown kind of joint");
-            }
-        }
-    }
 }
 
 void World::step(double timestep)
@@ -528,8 +462,82 @@ void World::step(double timestep)
         time_left -= dt;
 
         //detectAndSolveCollisions();
+        /*
+        {
+            // impulse-based constraint solver.
+            for( std::shared_ptr<Link>& link : _links )
+            {
+                if( link->isJoint() )
+                {
+                    Joint* joint = link->asJoint();
+
+                    if( joint->getType() == Joint::SPHERICAL )
+                    {
+                        std::shared_ptr<BodyInstance> body1 = joint->getBody1();
+                        std::shared_ptr<BodyInstance> body2 = joint->getBody2();
+
+                        const int id1 = body1->getId();
+                        const int id2 = body2->getId();
+
+                        // rotation matrix from body frame to world frame.
+                        const Eigen::Matrix3d R1 = body1->currentState().attitude.toRotationMatrix();
+                        const Eigen::Matrix3d R2 = body2->currentState().attitude.toRotationMatrix();
+
+                        // inverse of inertia matrix in world frame.
+                        const Eigen::Matrix3d II1 = body1->getInverseOfInertiaTensorWF( body1->currentState() );
+                        const Eigen::Matrix3d II2 = body2->getInverseOfInertiaTensorWF( body2->currentState() );
+
+                        // cross-product matrix of (body origin to anchor point) in world frame.
+                        const Eigen::Matrix3d X1 = Utils::crossProductMatrix( R1 * link->getAnchor1() );
+                        const Eigen::Matrix3d X2 = Utils::crossProductMatrix( R2 * link->getAnchor2() );
+
+                        // angular velocity in world frame.
+                        const Eigen::Vector3d omega1 = body1->getAngularVelocityWF( body1->currentState() );
+                        const Eigen::Vector3d omega2 = body2->getAngularVelocityWF( body2->currentState() );
+
+                        // resultant force before joint in world frame.
+                        const Eigen::Vector3d F1 = f.segment<3>(13*id1+7);
+                        const Eigen::Vector3d F2 = f.segment<3>(13*id2+7);
+
+                        // resultant moment in world frame.
+                        const Eigen::Vector3d T1 = f.segment<3>(13*id1+10);
+                        const Eigen::Vector3d T2 = f.segment<3>(13*id2+10);
+
+                        // angular momentum in world frame.
+                        const Eigen::Vector3d H1 = X.segment<3>(13*id1+10);
+                        const Eigen::Vector3d H2 = X.segment<3>(13*id2+10);
+
+                        const Eigen::Matrix3d A1 = Eigen::Matrix3d::Identity() / body1->getModel()->getMass() + X1.transpose() * II1 * X1;
+                        const Eigen::Matrix3d A2 = Eigen::Matrix3d::Identity() / body2->getModel()->getMass() + X2.transpose() * II2 * X2;
+
+                        const Eigen::Vector3d B1 = F1/body1->getModel()->getMass() - X1 * (II1*(T1 + H1.cross(omega1))) - omega1.cross(X1*omega1);
+                        const Eigen::Vector3d B2 = F2/body2->getModel()->getMass() - X2 * (II2*(T2 + H2.cross(omega2))) - omega2.cross(X2*omega2);
+
+                        Eigen::FullPivLU< Eigen::Matrix3d > solver;
+                        solver.compute(A1+A2);
+
+                        if(solver.isInvertible() == false) std::cout << "non invertible matrix encountered computing joints" << std::endl;
+
+                        Eigen::Vector3d Fc = solver.solve(B2-B1);
+
+                        f.segment<3>(13*id1+7) += Fc;
+                        f.segment<3>(13*id2+7) -= Fc;
+                        f.segment<3>(13*id1+10) += X1*Fc;
+                        f.segment<3>(13*id2+10) -= X2*Fc;
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unknown kind of joint");
+                    }
+                }
+            }
+        }
+        */
         //
-        for(std::shared_ptr<BodyInstance> b : _bodies) b->currentState() = b->collisionState();
+        for(std::shared_ptr<BodyInstance> b : _bodies)
+        {
+            b->currentState() = b->collisionState();
+        }
         //
 
         num_iterations++;

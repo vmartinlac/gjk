@@ -1,6 +1,10 @@
-add_executable(enginedemo main.cpp Preset.cpp)
+add_executable(
+    enginedemo
+    main.cpp
+    LoadWorld.h
+    LoadWorld.cpp)
 
-target_link_libraries(enginedemo PUBLIC engine ui Qt5::Widgets Qt5::Gui)
+target_link_libraries(enginedemo PUBLIC engine ui Qt5::Widgets Qt5::Gui jsoncpp)
 
 install(
     TARGETS enginedemo
