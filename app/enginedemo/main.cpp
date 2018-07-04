@@ -2,7 +2,7 @@
 #include <iostream>
 #include "World.h"
 #include "MainWindow.h"
-#include "LoadWorld.h"
+#include "WorldReader.h"
 
 int main(int num_args, char** args)
 {

@@ -60,6 +60,7 @@ public:
 
     double getFreeLength() { return _freeLength; }
     void setFreeLength(double value) { _freeLength = value; }
+    void adjustFreeLength();
 
     double getDampingCoefficient() { return _dampingCoefficient; }
     void setDampingCoefficient(double value) { _dampingCoefficient = value; }

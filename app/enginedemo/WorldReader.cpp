@@ -1,10 +1,11 @@
 #include <jsoncpp/json/json.h>
 #include <iostream>
 #include <fstream>
-#include "LoadWorld.h"
+#include "WorldReader.h"
 #include "PhysicalConstants.h"
 #include "BodyModel.h"
 #include "BodyInstance.h"
+#include "Link.h"
 
 void WorldReader::clear()
 {
@@ -267,7 +268,101 @@ bool WorldReader::parseBodyInstances(const Json::Value& value)
     return ok;
 }
 
-//bool parseLinks(const Json::Value& value);
+bool WorldReader::parseLinks(const Json::Value& value)
+{
+    bool ok = true;
+
+    if( value.isArray() )
+    {
+        for( const Json::Value& link_root : value )
+        {
+            std::string name;
+            std::string type;
+            std::map< std::string, std::shared_ptr<BodyInstance> >::iterator first_body;
+            std::map< std::string, std::shared_ptr<BodyInstance> >::iterator second_body;
+            Eigen::Vector3d first_anchor;
+            Eigen::Vector3d second_anchor;
+            std::shared_ptr<Link> link;
+
+            if(ok)
+            {
+                ok =
+                    link_root.isObject() &&
+                    link_root.isMember("name") &&
+                    link_root.isMember("type") &&
+                    link_root.isMember("first_body") &&
+                    link_root.isMember("second_body") &&
+                    link_root.isMember("first_anchor") &&
+                    link_root.isMember("second_anchor");
+            }
+
+            if(ok)
+            {
+                name = link_root["name"].asString();
+                type = link_root["type"].asString();
+                first_body = _body_instances.find( link_root["first_body"].asString() );
+                second_body = _body_instances.find( link_root["second_body"].asString() );
+                first_anchor = parseJsonVector<3>( link_root["first_anchor"] );
+                second_anchor = parseJsonVector<3>( link_root["second_anchor"] );
+
+                ok =
+                    ( _links.count(name) == 0 ) &&
+                    ( first_body != _body_instances.end() ) &&
+                    ( second_body != _body_instances.end() );
+            }
+
+            if(ok)
+            {
+                    if( type == "spring" )
+                    {
+                        Spring* spring = new Spring();
+
+                        spring->setBody1( first_body->second );
+                        spring->setBody2( second_body->second );
+                        spring->setAnchor1( first_anchor );
+                        spring->setAnchor2( second_anchor );
+
+                        spring->adjustFreeLength();
+
+                        if( link_root.isMember("free_length") )
+                        {
+                            spring->setFreeLength( link_root["free_length"].asDouble() );
+                        }
+
+                        if( link_root.isMember("elasticity") )
+                        {
+                            spring->setElasticityCoefficient( link_root["elasticity"].asDouble() );
+                        }
+
+                        if( link_root.isMember("damping") )
+                        {
+                            spring->setDampingCoefficient( link_root["damping"].asDouble() );
+                        }
+
+                        link.reset(spring);
+                    }
+                    else
+                    {
+                        ok = false;
+                    }
+            }
+
+            if(ok)
+            {
+                _links[name] = link;
+                _builder.addLink(link);
+
+                std::cout << "Creating link '" << name << "' of type '" << type << "'." << std::endl;
+            }
+        }
+    }
+    else
+    {
+        ok = false;
+    }
+
+    return ok;
+}
 
 std::shared_ptr<World> WorldReader::read(const std::string& path)
 {
@@ -329,50 +424,21 @@ std::shared_ptr<World> WorldReader::read(const std::string& path)
             std::cout << "Setting gravity to [ " << value.transpose() << " ]" << "." << std::endl;
             _builder.setGravity( parseJsonVector<3>( root["gravity"] ));
         }
+    }
 
-        if( ok && root.isMember("body_models") )
-        {
-            ok = parseBodyModels( root["body_models"] );
-        }
+    if( ok && root.isMember("body_models") )
+    {
+        ok = parseBodyModels( root["body_models"] );
+    }
 
-        if( ok && root.isMember("body_instances") )
-        {
-            ok = parseBodyInstances( root["body_instances"] );
-        }
+    if( ok && root.isMember("body_instances") )
+    {
+        ok = parseBodyInstances( root["body_instances"] );
+    }
 
-
-        /*
-        if( root.isMember("links") && root["links"].isArray() )
-        {
-            for( Json::Value& link_root : root["links"] )
-            {
-                std::string name;
-                std::shared_ptr<Link> link;
-                std::map< std::string, std::shared_ptr<BodyInstance> >::iterator first_body_instance;
-                std::map< std::string, std::shared_ptr<BodyInstance> >::iterator second_body_instance;
-
-                if(ok)
-                {
-                    ok =
-                        body_instance_root.isObject() &&
-                        body_instance_root.isMember("name") &&
-                        body_instance_root.isMember("model");
-                }
-
-                if(ok)
-                {
-                    name = body_instance_root["name"].asString();
-                    ok = ( _body_instances.count(name) == 0 );
-                }
-
-                if(ok)
-                {
-                    body_model = _body_models.find( body_instance_root["model"].asString() );
-                    ok = (body_model != body_models.end());
-                }
-            }
-        }
-        */
+    if( ok && root.isMember("links") )
+    {
+        ok = parseLinks( root["links"] );
     }
 
     if(ok)

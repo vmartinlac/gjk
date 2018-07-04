@@ -11,8 +11,13 @@ Link::Link()
 Spring::Spring()
 {
     _freeLength = 0.0;
-    _elasticityCoefficient = 1.0;
+    _elasticityCoefficient = 0.0;
     _dampingCoefficient = 0.0;
+}
+
+void Spring::adjustFreeLength()
+{
+    _freeLength = ( getAnchor2WF() - getAnchor1WF() ).norm();
 }
 
 Joint::Joint()
