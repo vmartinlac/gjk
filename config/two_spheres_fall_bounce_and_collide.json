@@ -1,0 +1,49 @@
+{
+    "linear_viscosity":0.0,
+    "angular_viscosity":0.0,
+    "gravity":[0.0, 0.0, -9.81],
+    "restitution_coefficient":0.55,
+    "body_models":[
+        {
+            "name":"mplate",
+            "type":"box",
+            "size":[25.0, 15.0, 1.0],
+            "density":"wood"
+        },
+        {
+            "name":"mball",
+            "type":"sphere",
+            "radius":1.0,
+            "density":"wood"
+        }
+    ],
+    "body_instances":[
+        {
+            "name":"ball1",
+            "model":"mball",
+            "position":[0.0, 0.0, 20.0]
+        },
+        {
+            "name":"ball2",
+            "model":"mball",
+            "position":[0.0, -20.0, 20.0]
+        },
+        {
+            "name":"plate1",
+            "model":"mplate",
+            "position":[0.0, 0.0, -20.0],
+            "attitude":[1.0, 0.0, 0.0, 18.0],
+            "moving":false
+        },
+        {
+            "name":"plate2",
+            "model":"mplate",
+            "position":[0.0, -20.0, -20.0],
+            "attitude":[1.0, 0.0, 0.0, -18.0],
+            "moving":false
+        }
+    ]
+}
+
+
+

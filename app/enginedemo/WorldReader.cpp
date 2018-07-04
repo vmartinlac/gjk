@@ -14,6 +14,23 @@ void WorldReader::clear()
     _links.clear();
 }
 
+Eigen::Quaterniond WorldReader::parseJsonAttitude(const Json::Value& value)
+{
+    Eigen::Quaterniond ret;
+
+    if( value.isArray() && value.size() == 4 )
+    {
+        Vector<4> v = parseJsonVector<4>(value);
+
+        const double theta = v(3)*M_PI/180.0;
+
+        ret.coeffs().head<3>() = v.head<3>().normalized() * sin(0.5*theta);
+        ret.coeffs()(3) = cos(0.5*theta);
+    }
+
+    return ret;
+}
+
 double WorldReader::parseJsonDensity(const Json::Value& value)
 {
     double ret = 1.0;
@@ -220,7 +237,8 @@ bool WorldReader::parseBodyInstances(const Json::Value& value)
 
                 if( body_instance_root.isMember("attitude") )
                 {
-                    state.attitude.coeffs() = parseJsonVector<4>( body_instance_root["attitude"] );
+                    //state.attitude.coeffs() = parseJsonVector<4>( body_instance_root["attitude"] );
+                    state.attitude = parseJsonAttitude( body_instance_root["attitude"] );
                     state.attitude.normalize();
                 }
 

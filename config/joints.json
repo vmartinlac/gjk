@@ -1,0 +1,55 @@
+{
+    "linear_viscosity":0.0,
+    "angular_viscosity":0.0,
+    "gravity":[0.0, 0.0, -9.81],
+    "restitution_coefficient":0.55,
+    "body_models":[
+        {
+            "name":"mball",
+            "type":"sphere",
+            "radius":1.0,
+            "density":"wood"
+        }
+    ],
+    "body_instances":[
+        {
+            "name":"ball1",
+            "model":"mball",
+            "moving":false,
+            "position":[-4.0, 0.0, 0.0]
+        },
+        {
+            "name":"ball2",
+            "model":"mball",
+            "position":[0.0, 0.0, 0.0]
+        },
+        {
+            "name":"ball3",
+            "model":"mball",
+            "position":[2.0, 0.0, 0.0]
+        }
+    ],
+    "links":[
+        {
+            "name":"L1",
+            "type":"spring",
+            "first_body":"ball1",
+            "second_body":"ball2",
+            "first_anchor":[1.0, 0.0, 0.0],
+            "second_anchor":[-1.0, 0.0, 0.0],
+            "damping":2000,
+            "elasticity":20000
+        },
+        {
+            "name":"L2",
+            "type":"spherical_joint",
+            "first_body":"ball2",
+            "second_body":"ball3",
+            "first_anchor":[1.0, 0.0, 0.0],
+            "second_anchor":[-1.0, 0.0, 0.0]
+        }
+    ]
+}
+
+
+

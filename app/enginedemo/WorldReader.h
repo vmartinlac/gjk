@@ -32,6 +32,8 @@ protected:
     template<int D>
     static Vector<D> parseJsonVector(const Json::Value& value);
 
+    static Eigen::Quaterniond parseJsonAttitude(const Json::Value& value);
+
     void clear();
 
     bool parseBodyModels(const Json::Value& value);

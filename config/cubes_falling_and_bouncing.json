@@ -1,0 +1,56 @@
+{
+    "linear_viscosity":0.0,
+    "angular_viscosity":0.0,
+    "gravity":[0.0, 0.0, -9.81],
+    "restitution_coefficient":1.0,
+    "body_models":[
+        {
+            "name":"mplate",
+            "type":"box",
+            "size":[25.0, 15.0, 1.0],
+            "density":"wood"
+        },
+        {
+            "name":"mcube",
+            "type":"box",
+            "size":[2.0, 2.0, 2.0],
+            "density":"wood"
+        }
+    ],
+    "body_instances":[
+        {
+            "name":"cube1",
+            "model":"mcube",
+            "position":[0.0, 0.0, 0.0]
+        },
+        {
+            "name":"cube2",
+            "model":"mcube",
+            "position":[0.0, 0.0, 15.0]
+        },
+        {
+            "name":"plate1",
+            "model":"mplate",
+            "position":[0.0, 0.0, -20.0],
+            "attitude":[1.0, 0.0, 0.0, 36.0],
+            "moving":false
+        },
+        {
+            "name":"plate2",
+            "model":"mplate",
+            "position":[0.0, -15.0, -30.0],
+            "attitude":[1.0, 0.0, 0.0, -36.0],
+            "moving":false
+        },
+        {
+            "name":"plate3",
+            "model":"mplate",
+            "position":[0.0, 0.0, -40.0],
+            "attitude":[1.0, 0.0, 0.0, 54.0],
+            "moving":false
+        }
+    ]
+}
+
+
+
