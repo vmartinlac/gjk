@@ -17,7 +17,9 @@ int main(int num_args, char** args)
     }
     else
     {
-        std::shared_ptr<World> world = load_world(args[1]);
+        WorldReader wr;
+
+        std::shared_ptr<World> world = wr.read(args[1]);
 
         if(world)
         {
