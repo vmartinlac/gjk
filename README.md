@@ -16,8 +16,8 @@ Dependencies
 ------------
 
 This program makes use of the following libraries :
+
 * openscenegraph
 * Qt5
 * boost
-* jsoncpp
 

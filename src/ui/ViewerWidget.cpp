@@ -14,21 +14,15 @@
 #include "ViewerWidget.h"
 #include "World.h"
 
-ViewerWidget::ViewerWidget(
-    std::shared_ptr<World> world,
-    QWidget* parent) :
-    QOpenGLWidget(parent),
-    _world(std::move(world))
+ViewerWidget::ViewerWidget( std::shared_ptr<World> world, QWidget* parent ) : QOpenGLWidget(parent), _world(world)
 {
-    osg::ref_ptr<osg::Node> data = _world->getRepresentation();
-
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
 
     _viewer = new osgViewer::Viewer;
     _viewer->setCameraManipulator(manipulator);
-    _viewer->setSceneData(data);
     _viewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
     _viewer->setRunFrameScheme(osgViewer::Viewer::ON_DEMAND);
+    _viewer->setSceneData(world->getRepresentation());
 
     _window = _viewer->setUpViewerAsEmbeddedInWindow(0, 0, width(), height());
 
@@ -42,6 +36,7 @@ void ViewerWidget::timerEvent(QTimerEvent* ev)
 {
     if(ev->timerId() == _updateTimer)
     {
+        _world->syncRepresentation();
         update();
     }
 }
@@ -64,6 +59,7 @@ void ViewerWidget::initializeGL()
 void ViewerWidget::mousePressEvent(QMouseEvent* event)
 {
     unsigned int button = 0;
+
     switch (event->button()){
     case Qt::LeftButton:
         button = 1;
@@ -77,6 +73,7 @@ void ViewerWidget::mousePressEvent(QMouseEvent* event)
     default:
         break;
     }
+
     _window->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
 }
 

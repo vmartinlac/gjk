@@ -3,8 +3,9 @@
 #include <memory>
 #include <QMainWindow>
 
+class Engine;
 class World;
-class QTimer;
+class QAction;
 class ViewerWidget;
 
 class MainWindow : public QMainWindow
@@ -20,14 +21,20 @@ public:
 protected slots:
 
     void initSimulation();
-    void runSimulation(bool);
-    void simulationStep();
+    void startSimulation();
+    void stopSimulation();
+
+    void simulationStarted();
+    void simulationStopped();
+
     void about();
 
 protected:
 
+    QAction* _start_action;
+    QAction* _stop_action;
     ViewerWidget* _viewer;
     std::shared_ptr<World> _world;
-    QTimer* _timer_simulation;
+    Engine* _engine;
 };
 

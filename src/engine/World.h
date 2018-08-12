@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <QMutex>
+#include <QJsonObject>
 #include <osg/Group>
 #include <osg/Array>
 #include <Eigen/Eigen>
@@ -15,75 +17,87 @@ class World
 {
 public:
 
-    class Builder;
+    typedef std::vector< std::shared_ptr<BodyInstance> > BodyIntanceList;
+    typedef std::vector< std::shared_ptr<Link> > LinkList;
 
-    ~World();
-
-    osg::ref_ptr<osg::Node> getRepresentation();
-
-    void home();
-    void step(double dt);
-
-protected:
-
-    World();
-    void syncRepresentation();
-
-    void integrate_explicit_euler(
-        double mindt, // input : minimal dt
-        double maxdt, // input : maximal dt
-        double& dt, // output : effective dt
-        bool& completed); // output : (completed == true) <=> (dt == maxdt)
-
-    void integrate_semiimplicit_euler(
-        double mindt, // input : minimal dt
-        double maxdt, // input : maximal dt
-        double& dt, // output : effective dt
-        bool& completed); // output : (completed == true) <=> (dt == maxdt)
-
-    void retrieveCurrentState(Eigen::VectorXd& X);
-    void computeStateDerivative(const Eigen::VectorXd& X, Eigen::VectorXd& f);
-    void normalizeState(Eigen::VectorXd& X);
-    void applyState(const Eigen::VectorXd& X);
-    BodyState extractIndividualState(const Eigen::VectorXd& X, int id);
-    void computeTimestep(const Eigen::VectorXd& X, double mindt, double maxdt, double& dt, bool& completed);
-
-    void detectAndSolveCollisions();
-
-protected:
-
-    std::vector< std::shared_ptr<BodyInstance> > _bodies;
-    std::vector< std::shared_ptr<Link> > _links;
-    int _num_bodies;
-    int _num_links;
-    int _num_springs;
-    Eigen::Vector3d _gravity;
-    double _linear_viscosity;
-    double _angular_viscosity;
-    double _margin;
-    double _restitution;
-    osg::ref_ptr<osg::Group> _representation;
-    osg::ref_ptr<osg::Vec3dArray> _springs_end_points;
-};
-
-class World::Builder
-{
 public:
 
-    Builder();
+    static World* fromJson(const QJsonObject& json);
+    static World* fromJson(const QString& path);
 
-    std::shared_ptr<World> build();
+    World();
+    ~World();
 
+    void addBody(std::shared_ptr<BodyInstance> body);
+    void addLink(std::shared_ptr<Link> link);
     void setMargin(double l);
     void setRestitution(double e);
     void setGravity(const Eigen::Vector3d& g);
     void setLinearViscosity(double v);
     void setAngularViscosity(double v);
 
-    void addBody( std::shared_ptr<BodyInstance> body );
-    void addLink( std::shared_ptr<Link> link );
+    void build();
+
+    osg::ref_ptr<osg::Node> getRepresentation();
+    LinkList& refLinkList();
+    BodyIntanceList& refBodyInstanceList();
+    Eigen::Vector3d getGravity();
+    double getAngularViscosity();
+    double getLinearViscosity();
+
+    void home();
+
+    void beginChangeVisualizationState();
+    void endChangeVisualizationState();
+    void syncRepresentation();
 
 protected:
 
-    std::shared_ptr<World> _world;
+    void doSyncRepresentation();
+
+protected:
+
+    std::vector< std::shared_ptr<BodyInstance> > _bodies;
+    std::vector< std::shared_ptr<Link> > _links;
+    Eigen::Vector3d _gravity;
+    double _linear_viscosity;
+    double _angular_viscosity;
+    double _margin;
+    double _restitution;
+    osg::ref_ptr<osg::Group> _representation;
+    int _num_springs;
+    osg::ref_ptr<osg::Vec3dArray> _springs_end_points;
+    bool m_need_resync;
+    QMutex m_sync_mutex;
 };
+
+inline osg::ref_ptr<osg::Node> World::getRepresentation()
+{
+    return _representation;
+}
+
+inline World::LinkList& World::refLinkList()
+{
+    return _links;
+}
+
+inline World::BodyIntanceList& World::refBodyInstanceList()
+{
+    return _bodies;
+}
+
+inline Eigen::Vector3d World::getGravity()
+{
+    return _gravity;
+}
+
+inline double World::getAngularViscosity()
+{
+    return _angular_viscosity;
+}
+
+inline double World::getLinearViscosity()
+{
+    return _linear_viscosity;
+}
+

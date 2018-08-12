@@ -13,23 +13,24 @@ public:
 
     enum KindOfState
     {
-        InitialState = 0,
-        CurrentState = 1,
-        CollisionState = 2
+        INITIAL_STATE = 0,
+        CURRENT_STATE = 1,
+        COLLISION_STATE = 2,
+        VISUALIZATION_STATE = 3,
+        NUM_STATES
     };
 
     BodyInstance(std::shared_ptr<BodyModel> model);
 
     std::shared_ptr<BodyModel> getModel();
 
-    osg::Node* getRepresentation() { return _representation.get(); }
-
-    void syncRepresentation();
+    osg::ref_ptr<osg::PositionAttitudeTransform> getRepresentation() { return _representation; }
 
     BodyState& state(KindOfState i) { return _states[i]; }
-    BodyState& initialState() { return state(InitialState); }
-    BodyState& currentState() { return state(CurrentState); }
-    BodyState& collisionState() { return state(CollisionState); }
+    BodyState& initialState() { return state(INITIAL_STATE); }
+    BodyState& currentState() { return state(CURRENT_STATE); }
+    BodyState& collisionState() { return state(COLLISION_STATE); }
+    BodyState& visualizationState() { return state(VISUALIZATION_STATE); }
 
     int getId() { return _id; }
     void setId(int id) { _id = id; }
@@ -53,7 +54,7 @@ public:
 protected:
 
     int _id;
-    BodyState _states[3];
+    BodyState _states[NUM_STATES];
     bool _moving;
     std::shared_ptr<BodyModel> _model;
     osg::ref_ptr<osg::PositionAttitudeTransform> _representation;

@@ -2,16 +2,32 @@
 add_library(
     engine
     SHARED
+    #BodyCollisionEstimator.cpp
+    #BodyCollisionEstimator.h
     BodyInstance.cpp
+    BodyInstance.h
     BodyModel.cpp
-    Cluster.cpp
-    Collision.cpp
-    BodyCollisionEstimator.cpp
+    BodyModel.h
+    BodyState.h
+    #Cluster.cpp
+    #Cluster.h
+    #Collision.cpp
+    #Collision.h
+    Engine.cpp
+    Engine.h
     Link.cpp
-    Utils.cpp
-    World.cpp)
+    Link.h
+    PhysicalConstants.h
+    Solver.cpp
+    Solver.h
+    #Utils.cpp
+    #Utils.h
+    World.cpp
+    WorldJson.cpp
+    World.h
+)
 
-target_link_libraries(engine PUBLIC gjk Boost::boost Eigen3::Eigen OpenSceneGraph)
+target_link_libraries(engine PUBLIC Qt5::Core gjk Boost::boost Eigen3::Eigen OpenSceneGraph)
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(

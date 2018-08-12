@@ -1,11 +1,12 @@
 #include <QMessageBox>
-#include <QTimer>
 #include <QKeySequence>
 #include <QApplication>
+#include <QAction>
 #include <QToolBar>
 #include "World.h"
 #include "MainWindow.h"
 #include "ViewerWidget.h"
+#include "Engine.h"
 
 MainWindow::MainWindow(
     std::shared_ptr<World> world,
@@ -13,7 +14,6 @@ MainWindow::MainWindow(
 {
     _world = world;
     _viewer = new ViewerWidget(world, this);
-    _timer_simulation = new QTimer(this);
 
     setCentralWidget(_viewer);
     resize(640, 480);
@@ -21,21 +21,25 @@ MainWindow::MainWindow(
 
     QToolBar* tb = addToolBar("Toolbar");
     QAction* a_init = tb->addAction("Init");
-    QAction* a_run = tb->addAction("Run");
+    _start_action = tb->addAction("Start");
+    _stop_action = tb->addAction("Stop");
     QAction* a_about = tb->addAction("About");
-    QAction* a_quit = tb->addAction("Quit");
 
     a_init->setShortcut(QKeySequence("Ctrl+I"));
-    a_run->setShortcut(QKeySequence("Ctrl+R"));
-    a_quit->setShortcut(QKeySequence("Ctrl+Q"));
 
-    a_run->setCheckable(true);
+    _engine = new Engine(this);
+    _engine->setWorld(_world);
 
     connect(a_init, SIGNAL(triggered()), this, SLOT(initSimulation()));
     connect(a_about, SIGNAL(triggered()), this, SLOT(about()));
-    connect(a_run, SIGNAL(toggled(bool)), this, SLOT(runSimulation(bool)));
-    connect(a_quit, SIGNAL(triggered()), QApplication::instance(), SLOT(quit()));
-    connect(_timer_simulation, SIGNAL(timeout()), this, SLOT(simulationStep()));
+
+    connect(_start_action, SIGNAL(triggered()), this, SLOT(startSimulation()));
+    connect(_stop_action, SIGNAL(triggered()), this, SLOT(stopSimulation()));
+
+    connect(_engine, SIGNAL(started()), this, SLOT(simulationStarted()));
+    connect(_engine, SIGNAL(finished()), this, SLOT(simulationStopped()));
+
+    simulationStopped();
 }
 
 void MainWindow::about()
@@ -43,25 +47,36 @@ void MainWindow::about()
     QMessageBox::information(this, "About", "Victor Martin Lac 2018");
 }
 
-void MainWindow::runSimulation(bool run)
-{
-    if(run)
-    {
-        _timer_simulation->start(1000/60);
-    }
-    else
-    {
-        _timer_simulation->stop();
-    }
-}
-
-void MainWindow::simulationStep()
-{
-    _world->step( double(_timer_simulation->interval())*1.0e-3 );
-}
-
 void MainWindow::initSimulation()
 {
     _world->home();
+}
+
+void MainWindow::startSimulation()
+{
+    if( _engine->isRunning() == false )
+    {
+        _engine->start();
+    }
+}
+
+void MainWindow::stopSimulation()
+{
+    if( _engine->isRunning() )
+    {
+        _engine->requestInterruption();
+    }
+}
+
+void MainWindow::simulationStarted()
+{
+    _start_action->setEnabled(false);
+    _stop_action->setEnabled(true);
+}
+
+void MainWindow::simulationStopped()
+{
+    _start_action->setEnabled(true);
+    _stop_action->setEnabled(false);
 }
 

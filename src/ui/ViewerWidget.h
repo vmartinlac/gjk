@@ -4,8 +4,8 @@
 #include <QOpenGLWidget>
 #include <osgViewer/Viewer>
 #include <osgViewer/GraphicsWindow>
+#include "World.h"
 
-class World;
 class QMouseEvent;
 
 class ViewerWidget : public QOpenGLWidget
@@ -14,7 +14,9 @@ class ViewerWidget : public QOpenGLWidget
 
 public:
 
-    ViewerWidget( std::shared_ptr<World> world, QWidget* parent=nullptr );
+    ViewerWidget(
+        std::shared_ptr<World>,
+        QWidget* parent=nullptr );
 
 protected:
 

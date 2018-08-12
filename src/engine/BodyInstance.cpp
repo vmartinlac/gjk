@@ -16,20 +16,6 @@ std::shared_ptr<BodyModel> BodyInstance::getModel()
     return _model;
 }
 
-void BodyInstance::syncRepresentation()
-{
-   const Eigen::Vector3d& position = currentState().position;
-   const Eigen::Quaterniond& attitude = currentState().attitude;
-
-   _representation->setPosition(
-      osg::Vec3d( position(0), position(1), position(2) )
-   );
-
-   _representation->setAttitude(
-      osg::Vec4d( attitude.x(), attitude.y(), attitude.z(), attitude.w() )
-   );
-}
-
 Eigen::Vector3d BodyInstance::getLinearVelocityWF(const BodyState& state)
 {
     return state.linear_momentum / _model->getMass();

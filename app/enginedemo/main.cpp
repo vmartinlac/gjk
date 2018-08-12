@@ -2,7 +2,6 @@
 #include <iostream>
 #include "World.h"
 #include "MainWindow.h"
-#include "WorldReader.h"
 
 int main(int num_args, char** args)
 {
@@ -17,19 +16,19 @@ int main(int num_args, char** args)
     }
     else
     {
-        WorldReader wr;
-
-        std::shared_ptr<World> world = wr.read(args[1]);
+        std::shared_ptr<World> world(World::fromJson(args[1]));
 
         if(world)
         {
             MainWindow* w = new MainWindow(world);
+
             w->show();
 
             ret = app.exec();
         }
         else
         {
+            std::cerr << "Given file is incorrect!" << std::endl;
             ret = 1;
         }
     }
