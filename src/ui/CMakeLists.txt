@@ -1,7 +1,7 @@
 
 add_library(ui SHARED MainWindow.cpp ViewerWidget.cpp)
 
-target_link_libraries(ui PUBLIC engine Qt5::Core Qt5::Widgets OpenSceneGraph)
+target_link_libraries(ui PUBLIC engine Qt5::Core Qt5::Widgets openscenegraph)
 target_include_directories(ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(

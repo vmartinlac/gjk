@@ -1,5 +1,3 @@
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/pending/disjoint_sets.hpp>
 #include <iostream>
 #include "Solver.h"
 #include "BodyInstance.h"

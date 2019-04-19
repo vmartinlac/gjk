@@ -51,3 +51,4 @@ void BodyCollisionEstimatorSA::run(
     std::cout << "FIN CALCUL POINTS PROXIMAUX" << std::endl;
     */
 }
+
