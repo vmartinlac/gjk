@@ -1,0 +1,163 @@
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{Derivation of ODE for Reduced Coordinates Rigid Body Mechanical Simulation}
+\author{Victor MARTIN-LAC}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Modelisation and notations}
+
+TODO
+
+\section{Derivation of equations of motion}
+
+For any virtual displacement $\delta x$ satisfying kinematic constraints, according to d'Alembert principle we have
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) \delta x_a = 0
+$$
+
+with
+
+$$
+x_a = \sum_b R^{I,b}_a y_b + t^I_a
+$$
+
+$$
+\delta x_a = \sum_{b,c} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b \delta \alpha_c
++ \sum_c \frac{\partial t^I_a}{\partial \alpha_c} \delta \alpha_c
+$$
+
+$$
+\dot{x}_a = \sum_{b,c} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b \dot{\alpha}_c
++ \sum_c \frac{\partial t^I_a}{\partial \alpha_c} \dot{\alpha}_c
+$$
+
+$$
+\ddot{x}_a =
+\sum_{b,c,d} \frac{ \partial^2 R^{I,b}_a }{ \partial \alpha_d \partial \alpha_c } y_b \dot{\alpha}_c \dot{\alpha}_d +
+\sum_{b,c} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b \ddot{\alpha}_c +
+\sum_{c,d} \frac{\partial^2 t^I_a}{\partial \alpha_d \partial \alpha_c} \dot{\alpha}_c \dot{\alpha}_d +
+\sum_{c} \frac{\partial t^I_a}{\partial \alpha_c} \ddot{\alpha}_c
+$$
+
+$$
+\ddot{x}_a =
+\sum_{c} ( \frac{\partial t^I_a}{\partial \alpha_c} +  \sum_{b} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b ) \ddot{\alpha}_c +
+\sum_{c,d} ( \frac{\partial^2 t^I_a}{\partial \alpha_d \partial \alpha_c} + \sum_{b} \frac{ \partial^2 R^{I,b}_a }{ \partial \alpha_d \partial \alpha_c } y_b ) \dot{\alpha}_c \dot{\alpha}_d
+$$
+
+then, $\forall \delta \alpha$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) (
+\sum_{b,c} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b \delta \alpha_c
++ \sum_c \frac{\partial t^I_a}{\partial \alpha_c} \delta \alpha_c ) = 0
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) (
+\sum_c( \sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b \delta \alpha_c
++ \frac{\partial t^I_a}{\partial \alpha_c} \delta \alpha_c ) ) = 0
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) (
+\sum_c \delta \alpha_c ( \sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b 
++ \frac{\partial t^I_a}{\partial \alpha_c} ) ) = 0
+$$
+
+$$
+\sum_c \delta \alpha_c
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) (
+\sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b 
++ \frac{\partial t^I_a}{\partial \alpha_c} ) = 0
+$$
+
+Consequently, $\forall c$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a (-\rho_I dv \ddot{x}_a + dv f_a) (
+\sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b 
++ \frac{\partial t^I_a}{\partial \alpha_c} ) = 0
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a \rho_I dv \ddot{x}_a (
+\sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b 
++ \frac{\partial t^I_a}{\partial \alpha_c} ) =
+\sum_I \int_{\Omega_I} 
+\sum_a dv f_a (
+\sum_b \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b 
++ \frac{\partial t^I_a}{\partial \alpha_c} )
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a \rho_I dv 
+( \sum_{e} A^I_{a,e} \ddot{\alpha}_e + \sum_{e,f} B^I_{a,e,f} \dot{\alpha}_e \dot{\alpha}_f )
+A^I_{a,c} =
+\sum_I \int_{\Omega_I} 
+\sum_a dv f_a A^I_{a,c}
+$$
+
+$$
+A^I_{a,c} = \frac{\partial t^I_a}{\partial \alpha_c} +  \sum_{b} \frac{ \partial R^{I,b}_a }{ \partial \alpha_c } y_b
+$$
+
+$$
+B^I_{a,c,d} = \frac{\partial^2 t^I_a}{\partial \alpha_d \partial \alpha_c} + \sum_{b} \frac{ \partial^2 R^{I,b}_a }{ \partial \alpha_d \partial \alpha_c } y_b
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a \sum_e \rho_I dv 
+ A^I_{a,e} A^I_{a,c} \ddot{\alpha}_e
+=
+\sum_I \int_{\Omega_I} 
+\sum_a (
+dv f_a A^I_{a,c}
+-
+\rho_I dv 
+( \sum_{e,f} B^I_{a,e,f} \dot{\alpha}_e \dot{\alpha}_f )
+A^I_{a,c} )
+$$
+
+$$
+\sum_I \int_{\Omega_I} 
+\sum_a \sum_e \rho_I dv 
+ A^I_{a,e} A^I_{a,c} \ddot{\alpha}_e
+=
+\sum_I \int_{\Omega_I} \sum_a dv A^I_{a,c}
+( f_a - \rho_I \sum_{e,f} B^I_{a,e,f} \dot{\alpha}_e \dot{\alpha}_f )
+$$
+
+$$
+\sum_e C_{c,e} \ddot{\alpha}_e = D_c
+$$
+
+$$
+C_{c,e} =
+\sum_I \int_{\Omega_I}
+\sum_a \rho_I dv
+ A^I_{a,e} A^I_{a,c}
+$$
+
+$$
+D_c =
+\sum_I \int_{\Omega_I} \sum_a dv A^I_{a,c}
+( f_a - \rho_I \sum_{e,f} B^I_{a,e,f} \dot{\alpha}_e \dot{\alpha}_f )
+$$
+
+\end{document}
