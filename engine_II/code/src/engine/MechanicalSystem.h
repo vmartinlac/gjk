@@ -12,38 +12,24 @@ class MechanicalSystem
 public:
 
     using Pose0Tensor = xt::xtensor<double,3>; // [body][row_of_RT][col_of_RT]
-    using Pose1Tensor = xt::xtensor<double,4>; // [body][row_of_RT][col_of_RT][DDL]
-    using Pose2Tensor = xt::xtensor<double,5>; // [body][row_of_RT][col_of_RT][DDL][DDL]
+    using Pose1Tensor = xt::xtensor<double,4>; // [body][row_of_RT][col_of_RT][DOF]
+    using Pose2Tensor = xt::xtensor<double,5>; // [body][row_of_RT][col_of_RT][DOF][DOF]
 
 public:
 
     MechanicalSystem();
 
-    std::vector< BodyPtr<D> >& refBodiesTree();
-    std::vector< BodyPtr<D> >& refBodiesVector();
+    virtual size_t getNumDegreesOfFreedom() = 0;
 
-    void init();
+    virtual size_t getNumBodies() = 0;
 
-    size_t getNumDegreesOfFreedom();
+    virtual BodyPtr<D> getBody(size_t i) = 0;
 
-    size_t getNumBodies();
-
-    void evaluate(
-        const Eigen::VectorXd& state,
-        std::vector< Pose<D> >& poses);
-
-    void evaluate(
+    virtual void evaluate(
         const Eigen::VectorXd& state,
         Pose0Tensor& poses,
         Pose1Tensor& first_order_derivatives,
-        Pose2Tensor& second_order_derivatives);
-
-protected:
-
-    size_t mNumDegreesOfFreedom;
-    std::vector< BodyPtr<D> > mBodiesTree;
-    std::vector< BodyPtr<D> > mBodiesVector;
-    std::vector<size_t> mLinkOffset;
+        Pose2Tensor& second_order_derivatives) = 0;
 };
 
 template<int D>

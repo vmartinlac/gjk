@@ -4,6 +4,8 @@
 #include <memory>
 #include "BodyModel.h"
 #include "Link.h"
+#include "Pose.h"
+#include "Velocity.h"
 
 template<int D>
 class Body;
@@ -20,14 +22,18 @@ public:
 
     size_t getId();
 
-    LinkPtr<D> getLink();
+    BodyModelPtr<D> getModel();
 
-protected:
+    Pose<D>& refPose();
+
+    Velocity<D>& refVelocity();
+
+private:
 
     size_t mId;
     BodyModelPtr<D> mModel;
-    LinkPtr<D> mLinkToParent;
-    std::vector<BodyPtr<D>> mChildren;
+    Pose<D> mPose;
+    Velocity<D> mVelocity;
 };
 
 

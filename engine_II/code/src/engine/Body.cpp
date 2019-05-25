@@ -13,9 +13,21 @@ size_t Body<D>::getId()
 }
 
 template<int D>
-LinkPtr<D> Body<D>::getLink()
+BodyModelPtr<D> Body<D>::getModel()
 {
-    return mLinkToParent;
+    return mModel;
+}
+
+template<int D>
+Pose<D>& Body<D>::refPose()
+{
+    return mPose;
+}
+
+template<int D>
+Velocity<D>& Body<D>::refVelocity()
+{
+    return mVelocity;
 }
 
 template class Body<2>;

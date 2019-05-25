@@ -6,14 +6,20 @@ add_library(
     Solver.cpp
     MechanicalSystem.h
     MechanicalSystem.cpp
+    ArticulatedSystem.h
+    ArticulatedSystem.cpp
     Link.h
     Link.cpp
     Body.h
     Body.cpp
+    LinkedBody.h
+    LinkedBody.cpp
     BodyModel.h
     BodyModel.cpp
     Pose.h
     Pose.cpp
+    Velocity.h
+    Velocity.cpp
 )
 
 target_compile_definitions(engine PUBLIC BUILD_2D)
