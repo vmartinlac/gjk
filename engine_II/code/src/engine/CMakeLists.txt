@@ -8,12 +8,22 @@ add_library(
     MechanicalSystem.cpp
     ArticulatedSystem.h
     ArticulatedSystem.cpp
-    Link.h
-    Link.cpp
+    Joint.h
+    Joint.cpp
+    FreeJoint.h
+    FreeJoint.cpp
+    FixedJoint.h
+    FixedJoint.cpp
+    HingeJoint3.h
+    HingeJoint3.cpp
+    CylindricalJoint3.h
+    CylindricalJoint3.cpp
+    PrismaticJoint3.h
+    PrismaticJoint3.cpp
     Body.h
     Body.cpp
-    LinkedBody.h
-    LinkedBody.cpp
+    ArticulatedBody.h
+    ArticulatedBody.cpp
     BodyModel.h
     BodyModel.cpp
     Pose.h
@@ -22,8 +32,8 @@ add_library(
     Velocity.cpp
 )
 
-target_compile_definitions(engine PUBLIC BUILD_2D)
-target_compile_definitions(engine PUBLIC BUILD_3D)
+#target_compile_definitions(engine PUBLIC BUILD_2D)
+#target_compile_definitions(engine PUBLIC BUILD_3D)
 
 target_link_libraries(engine PUBLIC Eigen3::Eigen Sophus::Sophus openscenegraph xtensor)
 

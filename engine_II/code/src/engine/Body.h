@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "BodyModel.h"
-#include "Link.h"
 #include "Pose.h"
 #include "Velocity.h"
 

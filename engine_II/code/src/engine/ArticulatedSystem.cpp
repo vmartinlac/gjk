@@ -16,7 +16,7 @@ void ArticulatedSystem<D>::init()
     {
         mBodiesVector[id]->setId(id);
         mLinkOffset[id] = mNumDegreesOfFreedom;
-        mNumDegreesOfFreedom += mBodiesVector[id]->getLink()->getNumDegreesOfFreedom();
+        mNumDegreesOfFreedom += mBodiesVector[id]->getJoint()->getNumDegreesOfFreedom();
     }
 }
 
@@ -33,13 +33,13 @@ size_t ArticulatedSystem<D>::getNumBodies()
 }
 
 template<int D>
-std::vector< LinkedBodyPtr<D> >& ArticulatedSystem<D>::refBodiesTree()
+std::vector< ArticulatedBodyPtr<D> >& ArticulatedSystem<D>::refBodiesTree()
 {
     return mBodiesTree;
 }
 
 template<int D>
-std::vector< LinkedBodyPtr<D> >& ArticulatedSystem<D>::refBodiesVector()
+std::vector< ArticulatedBodyPtr<D> >& ArticulatedSystem<D>::refBodiesVector()
 {
     return mBodiesVector;
 }

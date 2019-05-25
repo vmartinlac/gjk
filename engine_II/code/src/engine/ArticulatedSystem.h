@@ -2,7 +2,7 @@
 #pragma once
 
 #include "MechanicalSystem.h"
-#include "LinkedBody.h"
+#include "ArticulatedBody.h"
 
 template<int D>
 class ArticulatedSystem : public MechanicalSystem<D>
@@ -11,8 +11,8 @@ public:
 
     ArticulatedSystem();
 
-    std::vector< LinkedBodyPtr<D> >& refBodiesTree();
-    std::vector< LinkedBodyPtr<D> >& refBodiesVector();
+    std::vector< ArticulatedBodyPtr<D> >& refBodiesTree();
+    std::vector< ArticulatedBodyPtr<D> >& refBodiesVector();
 
     void init();
 
@@ -31,8 +31,8 @@ public:
 protected:
 
     size_t mNumDegreesOfFreedom;
-    std::vector< LinkedBodyPtr<D> > mBodiesTree;
-    std::vector< LinkedBodyPtr<D> > mBodiesVector;
+    std::vector< ArticulatedBodyPtr<D> > mBodiesTree;
+    std::vector< ArticulatedBodyPtr<D> > mBodiesVector;
     std::vector<size_t> mLinkOffset;
 };
 

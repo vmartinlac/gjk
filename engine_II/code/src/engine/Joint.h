@@ -5,11 +5,11 @@
 #include "Pose.h"
 
 template<int D>
-class Link
+class Joint
 {
 public:
 
-    Link();
+    Joint();
 
     virtual size_t getNumDegreesOfFreedom() = 0;
 
@@ -19,10 +19,10 @@ public:
 
 private:
 
-    Pose<D> mParentToLink;
-    Pose<D> mChildToLink;
+    Pose<D> mParentToJoint;
+    Pose<D> mChildToJoint;
 };
 
 template<int D>
-using LinkPtr = std::shared_ptr<Link<D>>;
+using JointPtr = std::shared_ptr<Joint<D>>;
 

@@ -3,7 +3,7 @@
 #include <memory>
 #include <xtensor/xtensor.hpp>
 #include <vector>
-#include "Link.h"
+#include "Joint.h"
 #include "Body.h"
 
 template<int D>
