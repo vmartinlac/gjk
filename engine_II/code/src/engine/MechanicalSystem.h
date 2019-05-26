@@ -26,10 +26,16 @@ public:
     virtual BodyPtr<D> getBody(size_t i) = 0;
 
     virtual void evaluate(
+        double t,
         const Eigen::VectorXd& state,
         Pose0Tensor& poses,
         Pose1Tensor& first_order_derivatives,
         Pose2Tensor& second_order_derivatives) = 0;
+
+    virtual void evaluate(
+        double t,
+        const Eigen::VectorXd& state,
+        Pose0Tensor& poses);
 };
 
 template<int D>

@@ -9,25 +9,32 @@ class Solver
 {
 public:
 
-    void init(MechanicalSystemPtr<D> system, double dt);
+    void init(
+        MechanicalSystemPtr<D> system,
+        double dt);
 
     Eigen::VectorXd& refState0();
     Eigen::VectorXd& refState1();
 
-    void getPosesAndVelocities(
-        std::vector< Pose<D> >& poses,
-        std::vector< Velocity<D> >& velocities);
-
     void step();
 
-    double getTime();
+    double getCurrentTime();
 
-    int getStep();
+    int getCurrentStep();
+
+protected:
+
+    void computeSecondOrderDerivative(
+        double t,
+        const Eigen::VectorXd& alpha,
+        Eigen::VectorXd& result);
+
+    void updateBodies();
 
 protected:
 
     double mTimestep;
-    int mStep;
+    int mCurrentStep;
     MechanicalSystemPtr<D> mMechanicalSystem;
     Eigen::VectorXd mState0;
     Eigen::VectorXd mState1;

@@ -23,6 +23,7 @@ public:
     BodyPtr<D> getBody(size_t i) override;
 
     void evaluate(
+        double t,
         const Eigen::VectorXd& state,
         typename MechanicalSystem<D>::Pose0Tensor& poses,
         typename MechanicalSystem<D>::Pose1Tensor& first_order_derivatives,
