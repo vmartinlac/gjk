@@ -34,6 +34,7 @@ void Solver<D>::step()
     computeSecondOrderDerivative(
         t,
         mState0,
+        mState1,
         f);
 
     Eigen::VectorXd new_state1 = mState1 + mTimestep*f;
@@ -79,7 +80,8 @@ int Solver<D>::getCurrentStep()
 template<int D>
 void Solver<D>::computeSecondOrderDerivative(
     double t,
-    const Eigen::VectorXd& alpha,
+    const Eigen::VectorXd& alpha0,
+    const Eigen::VectorXd& alpha1,
     Eigen::VectorXd& result )
 {
     const size_t num_dof = mMechanicalSystem->getNumDegreesOfFreedom();
@@ -89,7 +91,7 @@ void Solver<D>::computeSecondOrderDerivative(
     typename MechanicalSystem<D>::Pose1Tensor pose1;
     typename MechanicalSystem<D>::Pose2Tensor pose2;
 
-    mMechanicalSystem->evaluate(t, alpha, pose0, pose1, pose2);
+    mMechanicalSystem->evaluate(t, alpha0, pose0, pose1, pose2);
 
     Eigen::MatrixXd A(num_dof, num_dof);
     Eigen::VectorXd B(num_dof);
@@ -111,13 +113,17 @@ void Solver<D>::computeSecondOrderDerivative(
             {
                 for(size_t a=0; a<D; a++)
                 {
-                    A(c,e) += mass * pose1(body, a, 3, c) * pose1(body, a, 3, e); // (1)
+                    A(c,e) += mass * pose1(body, a, 3, c) * pose1(body, a, 3, e); // (C1)
 
                     for(size_t i=0; i<D; i++)
                     {
+                        A(c,e) += n_vector(i) * pose1(body, a, 3, c) * pose1(body, a, i, e); // (C3)
+
+                        A(c,e) += n_vector(i) * pose1(body, a, 3, e) * pose1(body, a, i, c); // (C4)
+
                         for(size_t j=0; j<D; j++)
                         {
-                            A(c,e) += m_tensor(i, j) * pose1(body, a, i, c) * pose1(body, a, j, e); // (2)
+                            A(c,e) += m_tensor(i, j) * pose1(body, a, i, c) * pose1(body, a, j, e); // (C2)
                         }
                     }
                 }

@@ -26,7 +26,8 @@ protected:
 
     void computeSecondOrderDerivative(
         double t,
-        const Eigen::VectorXd& alpha,
+        const Eigen::VectorXd& alpha0,
+        const Eigen::VectorXd& alpha1,
         Eigen::VectorXd& result);
 
     void updateBodies();
